@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#ffffff">
+<title>マラソン ペーストラッカー</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg2: #f5f5f3;
+    --bg3: #efefed;
+    --text: #1a1a19;
+    --text2: #6b6b68;
+    --text3: #9e9e9b;
+    --border: rgba(0,0,0,0.15);
+    --border2: rgba(0,0,0,0.25);
+    --info-bg: #E6F1FB;
+    --info-text: #0C447C;
+    --danger-bg: #FCEBEB;
+    --danger-text: #791F1F;
+    --success-bg: #EAF3DE;
+    --success-text: #27500A;
+    --warning-bg: #FAEEDA;
+    --warning-text: #633806;
+    --radius: 8px;
+    --radius-lg: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1a;
+      --bg2: #252523;
+      --bg3: #2e2e2b;
+      --text: #f0f0ee;
+      --text2: #a0a09d;
+      --text3: #6b6b68;
+      --border: rgba(255,255,255,0.12);
+      --border2: rgba(255,255,255,0.22);
+      --info-bg: #0c2e4a;
+      --info-text: #85B7EB;
+      --danger-bg: #3a1a1a;
+      --danger-text: #F09595;
+      --success-bg: #1a2e0e;
+      --success-text: #97C459;
+      --warning-bg: #2e1e06;
+      --warning-text: #EF9F27;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg3); color: var(--text); min-height: 100vh; }
+  .container { max-width: 720px; margin: 0 auto; padding: 1rem; }
+  h1 { font-size: 20px; font-weight: 500; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px; }
+  .grid4 { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; margin-bottom: 1rem; }
+  .metric { background: var(--bg2); border-radius: var(--radius); padding: .75rem 1rem; }
+  .mlabel { font-size: 11px; color: var(--text2); margin-bottom: 4px; }
+  .mval { font-size: 18px; font-weight: 500; }
+  .msub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .card { background: var(--bg); border: .5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 1rem; }
+  .stitle { font-size: 14px; font-weight: 500; margin-bottom: .75rem; display: flex; align-items: center; gap: 6px; }
+  .row { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; margin-bottom: .5rem; }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field label { font-size: 12px; color: var(--text2); }
+  .field input, .field select { height: 36px; padding: 0 10px; border: .5px solid var(--border2); border-radius: var(--radius); background: var(--bg); color: var(--text); font-size: 14px; }
+  .field input:focus, .field select:focus { outline: none; box-shadow: 0 0 0 2px var(--info-text); }
+  .btn { height: 36px; padding: 0 14px; border: .5px solid var(--border2); border-radius: var(--radius); background: transparent; color: var(--text); font-size: 13px; cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; }
+  .btn:hover { background: var(--bg2); }
+  .btn:active { transform: scale(.98); }
+  .btn-primary { background: var(--info-bg); color: var(--info-text); border-color: transparent; }
+  .btn-primary:hover { opacity: .85; }
+  .btn-danger { background: var(--danger-bg); color: var(--danger-text); border-color: transparent; }
+  .btn-warning { background: var(--warning-bg); color: var(--warning-text); border-color: transparent; }
+  .btn-warning:hover { opacity: .85; }
+  .btn-success { background: var(--success-bg); color: var(--success-text); border-color: transparent; }
+  .btn-success:hover { opacity: .85; }
+  .btn-sm { height: 28px; padding: 0 10px; font-size: 12px; }
+  .btn-lg { height: 52px; padding: 0 20px; font-size: 15px; font-weight: 500; border-radius: var(--radius-lg); }
+  .msg { font-size: 12px; color: var(--danger-text); min-height: 16px; margin-top: .25rem; }
+  .hint { font-size: 12px; color: var(--text3); margin-bottom: .75rem; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+  th { font-size: 11px; font-weight: 500; color: var(--text2); text-align: left; padding: 6px 8px; border-bottom: .5px solid var(--border); }
+  td { padding: 7px 8px; border-bottom: .5px solid var(--border); vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; }
+  .b-blue { background: #E6F1FB; color: #0C447C; }
+  .b-green { background: #EAF3DE; color: #27500A; }
+  .b-amber { background: #FAEEDA; color: #633806; }
+  .b-gray { background: #F1EFE8; color: #444441; }
+  .b-red { background: #FCEBEB; color: #791F1F; }
+  .b-teal { background: #E1F5EE; color: #085041; }
+  .tab-row { display: flex; gap: 4px; margin-bottom: 1rem; flex-wrap: wrap; }
+  .tab { padding: 5px 14px; font-size: 13px; border-radius: 20px; border: .5px solid var(--border); cursor: pointer; background: transparent; color: var(--text2); }
+  .tab.active { background: var(--info-bg); color: var(--info-text); border-color: transparent; }
+  .pgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
+  .pcard { background: var(--bg2); border-radius: var(--radius); padding: .65rem .75rem; text-align: center; }
+  .pcard-hl { border: 2px solid var(--info-text); }
+  .pcard-km { font-size: 11px; color: var(--text2); margin-bottom: 3px; }
+  .pcard-time { font-size: 15px; font-weight: 500; }
+  .pcard-eta { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .empty { text-align: center; padding: 2rem; color: var(--text3); font-size: 13px; }
+  .chart-wrap { position: relative; height: 200px; }
+  .rest-indicator { display: flex; align-items: center; gap: 8px; padding: .5rem .75rem; background: var(--danger-bg); border-radius: var(--radius); font-size: 13px; color: var(--danger-text); margin-bottom: .75rem; }
+  .rest-timer { font-weight: 500; font-size: 15px; }
+  .divider { height: .5px; background: var(--border); margin: .75rem 0; }
+  .preset-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: .5rem; }
+  .preset-btn { height: 30px; padding: 0 12px; font-size: 12px; border: .5px solid var(--border2); border-radius: var(--radius); background: transparent; color: var(--text2); cursor: pointer; }
+  .preset-btn:hover { background: var(--bg2); }
+  .preset-btn.selected { background: var(--info-bg); color: var(--info-text); border-color: transparent; }
+  .big-btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: .75rem; }
+  details summary { font-size: 13px; color: var(--text2); cursor: pointer; user-select: none; list-style: none; display: flex; align-items: center; gap: 6px; }
+  details summary::-webkit-details-marker { display: none; }
+  @media (max-width: 500px) {
+    .grid4 { grid-template-columns: repeat(2, 1fr); }
+    .btn-lg { flex: 1; }
+    h1 { font-size: 17px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1><i class="ti ti-run"></i> マラソン ペーストラッカー</h1>
+
+<div class="grid4">
+  <div class="metric"><div class="mlabel">通過済み</div><div class="mval" id="s-km">— km</div></div>
+  <div class="metric"><div class="mlabel">現在ペース</div><div class="mval" id="s-pace">—</div><div class="msub" id="s-pace-label">/ km</div></div>
+  <div class="metric"><div class="mlabel">直前ラップ</div><div class="mval" id="s-avg">—</div><div class="msub">/ km</div></div>
+  <div class="metric"><div class="mlabel">ゴール予想時刻</div><div class="mval" id="s-finish">—</div><div class="msub" id="s-finish-label"></div></div>
+</div>
+
+<div class="card">
+  <div class="stitle"><i class="ti ti-settings"></i> 基本設定</div>
+  <div class="row">
+    <div class="field">
+      <label>スタート時刻</label>
+      <input type="time" id="start-time" step="1" style="width:130px">
+    </div>
+    <button class="btn btn-primary" onclick="setStart()"><i class="ti ti-check"></i> セット</button>
+    <span id="start-display" style="font-size:13px;color:var(--text2);align-self:center"></span>
+  </div>
+  <div class="divider"></div>
+  <div class="stitle" style="margin-bottom:.5rem"><i class="ti ti-flag"></i> ゴール距離</div>
+  <div class="row">
+    <div class="field">
+      <label>距離 (km)</label>
+      <input type="number" id="goal-km" min="0.1" max="9999" step="0.001" value="42.195" style="width:120px" oninput="onGoalChange()">
+    </div>
+    <span id="goal-display" style="font-size:13px;color:var(--text2);align-self:flex-end;padding-bottom:8px">フルマラソン (42.195km)</span>
+  </div>
+  <div class="preset-row">
+    <button class="preset-btn selected" onclick="setGoalPreset(42.195,'フルマラソン',this)">フル 42.195</button>
+    <button class="preset-btn" onclick="setGoalPreset(21.0975,'ハーフ',this)">ハーフ 21.0975</button>
+    <button class="preset-btn" onclick="setGoalPreset(10,'10km',this)">10km</button>
+    <button class="preset-btn" onclick="setGoalPreset(5,'5km',this)">5km</button>
+    <button class="preset-btn" onclick="setGoalPreset(3,'3km',this)">3km</button>
+  </div>
+  <div class="divider"></div>
+  <div class="stitle" style="margin-bottom:.5rem"><i class="ti ti-speedboat"></i> ペース計算の基準</div>
+  <select id="pace-mode" style="height:36px;font-size:13px;padding:0 10px;border:.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text)" onchange="render()">
+    <option value="2">直近 2 km</option>
+    <option value="1">直近 1 km</option>
+    <option value="3">直近 3 km</option>
+    <option value="5">直近 5 km</option>
+    <option value="0">全区間平均</option>
+  </select>
+</div>
+
+<div class="card">
+  <div class="stitle"><i class="ti ti-target"></i> ワンタッチ記録</div>
+  <div class="hint">ボタンを押すと現在時刻で即記録します</div>
+
+  <div id="rest-indicator" class="rest-indicator" style="display:none">
+    <i class="ti ti-coffee"></i>
+    <span>休憩中</span>
+    <span class="rest-timer" id="rest-timer-display">0:00</span>
+    <span style="font-size:12px">経過</span>
+  </div>
+
+  <div class="big-btn-row">
+    <div class="field" style="flex-shrink:0">
+      <label>キロ地点</label>
+      <input type="number" id="quick-km" min="0.1" max="9999" step="0.1" placeholder="例: 5" style="width:100px;height:52px;font-size:16px">
+    </div>
+    <button class="btn btn-lg btn-primary" onclick="quickSplit()" style="align-self:flex-end;flex:1;min-width:130px">
+      <i class="ti ti-map-pin"></i> 今の時刻で通過記録
+    </button>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="big-btn-row">
+    <button class="btn btn-lg btn-warning" id="btn-rest-start" onclick="quickRestStart()" style="flex:1">
+      <i class="ti ti-player-pause"></i> 休憩 開始
+    </button>
+    <button class="btn btn-lg btn-success" id="btn-rest-end" onclick="quickRestEnd()" style="flex:1" disabled>
+      <i class="ti ti-player-play"></i> 休憩 終了（再出発）
+    </button>
+  </div>
+
+  <div class="divider"></div>
+
+  <details>
+    <summary><i class="ti ti-pencil" style="font-size:14px"></i> 手動で時刻を指定して入力</summary>
+    <div style="margin-top:.75rem">
+      <div class="row">
+        <div class="field">
+          <label>種別</label>
+          <select id="entry-type" style="width:110px" onchange="onTypeChange()">
+            <option value="split">通過</option>
+            <option value="rest">休憩開始</option>
+            <option value="rest_end">休憩終了</option>
+          </select>
+        </div>
+        <div class="field" id="f-km">
+          <label>キロ地点</label>
+          <input type="number" id="entry-km" min="0.1" max="9999" step="0.1" placeholder="例: 34.5" style="width:110px">
+        </div>
+        <div class="field">
+          <label>通過時刻</label>
+          <input type="time" id="entry-clock" step="1" style="width:130px">
+        </div>
+        <div class="field">
+          <label>メモ</label>
+          <input type="text" id="entry-note" placeholder="給水など" style="width:100px">
+        </div>
+        <button class="btn btn-primary" onclick="addEntry()"><i class="ti ti-check"></i> 追加</button>
+      </div>
+    </div>
+  </details>
+  <div class="msg" id="msg"></div>
+</div>
+
+<div class="card">
+  <div class="stitle"><i class="ti ti-flag"></i> 予測地点の追加</div>
+  <div class="hint">デフォルト以外に予測したい地点（例: 34.5）を追加できます</div>
+  <div class="row">
+    <div class="field">
+      <label>地点 (km)</label>
+      <input type="number" id="custom-km" min="0.1" max="9999" step="0.1" placeholder="例: 34.5" style="width:110px">
+    </div>
+    <button class="btn" onclick="addCustomTarget()"><i class="ti ti-plus"></i> 追加</button>
+  </div>
+  <div id="custom-tags" style="display:flex;flex-wrap:wrap;gap:6px;min-height:8px"></div>
+</div>
+
+<div class="card">
+  <div class="tab-row">
+    <button class="tab active" onclick="showTab('records')" id="tab-records">記録一覧</button>
+    <button class="tab" onclick="showTab('predict')" id="tab-predict">通過予測</button>
+    <button class="tab" onclick="showTab('chart')" id="tab-chart">ペースグラフ</button>
+  </div>
+
+  <div id="pane-records">
+    <div style="overflow-x:auto">
+    <table>
+      <thead><tr>
+        <th style="width:72px">地点</th>
+        <th style="width:72px">通過時刻</th>
+        <th style="width:68px">経過</th>
+        <th style="width:64px">ラップ</th>
+        <th style="width:76px">ペース</th>
+        <th>メモ</th>
+        <th style="width:36px"></th>
+      </tr></thead>
+      <tbody id="records-body">
+        <tr><td colspan="7"><div class="empty"><i class="ti ti-flag"></i><br>まだ記録がありません</div></td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <div id="pane-predict" style="display:none">
+    <div class="pgrid" id="predict-grid">
+      <div class="empty" style="grid-column:1/-1">記録を追加すると予測が表示されます</div>
+    </div>
+  </div>
+
+  <div id="pane-chart" style="display:none">
+    <div class="chart-wrap"><canvas id="pace-chart"></canvas></div>
+  </div>
+</div>
+
+<p style="text-align:center;font-size:11px;color:var(--text3);padding-bottom:1.5rem">マラソン ペーストラッカー</p>
+</div>
+
+<script>
+let TOTAL = 42.195;
+let goalName = 'フルマラソン';
+let startSec = null, entries = [], customTargets = [], chartInst = null, restTimerInterval = null;
+
+function getDefaultTargets() {
+  const t = [];
+  if (TOTAL >= 1) t.push(1);
+  if (TOTAL >= 5) t.push(5);
+  if (TOTAL >= 10) t.push(10);
+  if (TOTAL >= 15) t.push(15);
+  if (TOTAL >= 20) t.push(20);
+  if (Math.abs(TOTAL - 42.195) < 0.01) t.push(21.0975);
+  if (TOTAL >= 25) t.push(25);
+  if (TOTAL >= 30) t.push(30);
+  if (TOTAL >= 35) t.push(35);
+  if (TOTAL >= 40) t.push(40);
+  t.push(TOTAL);
+  return [...new Set(t)].sort((a, b) => a - b);
+}
+
+function nowSec() { const n = new Date(); return n.getHours() * 3600 + n.getMinutes() * 60 + n.getSeconds(); }
+function timeToSec(t) { if (!t) return null; const p = t.split(':').map(Number); if (p.length === 3) return p[0]*3600+p[1]*60+p[2]; if (p.length === 2) return p[0]*3600+p[1]*60; return null; }
+function secToClockStr(s) { s = ((Math.round(s) % 86400) + 86400) % 86400; const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),ss=s%60; return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`; }
+function elapsed(cs) { if (startSec === null) return null; let d = cs - startSec; if (d < 0) d += 86400; return d; }
+function fmtElapsed(s) { s=Math.round(s); const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),ss=s%60; if(h>0)return`${h}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`; return`${m}:${String(ss).padStart(2,'0')}`; }
+function fmtPace(spk) { if(!spk||spk<=0||!isFinite(spk))return'—'; const m=Math.floor(spk/60),s=Math.round(spk%60); return`${m}'${String(s).padStart(2,'0')}`; }
+function getSplits() { return entries.filter(e=>e.type==='split').sort((a,b)=>a.km-b.km); }
+function getRestsBetween(e1, e2) { return entries.filter(r=>r.type==='rest'&&r.restDuration&&r.elapsed>=e1.elapsed&&r.elapsed<=e2.elapsed).reduce((s,r)=>s+r.restDuration,0); }
+function isResting() { return entries.some(e=>e.type==='rest'&&!e.restDuration); }
+
+function setGoalPreset(km, name, btn) {
+  TOTAL = km; goalName = name;
+  document.getElementById('goal-km').value = km;
+  document.getElementById('goal-display').textContent = `${name} (${km}km)`;
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  render();
+}
+
+function onGoalChange() {
+  const v = parseFloat(document.getElementById('goal-km').value);
+  if (isNaN(v) || v <= 0) return;
+  TOTAL = v;
+  const presets = { 42.195: 'フルマラソン', 21.0975: 'ハーフマラソン', 10: '10km', 5: '5km', 3: '3km' };
+  goalName = presets[v] || `${v}km`;
+  document.getElementById('goal-display').textContent = `${goalName} (${v}km)`;
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('selected'));
+  render();
+}
+
+function getPaceForPrediction() {
+  const sp = getSplits();
+  if (sp.length < 1) return null;
+  const modeVal = parseInt(document.getElementById('pace-mode').value);
+  if (modeVal === 0) {
+    if (sp.length < 2) return null;
+    const last = sp[sp.length-1];
+    const tr = entries.filter(r=>r.type==='rest'&&r.restDuration&&r.elapsed<=last.elapsed).reduce((s,r)=>s+r.restDuration,0);
+    return (last.elapsed - tr) / last.km;
+  }
+  const recent = sp.slice(-modeVal);
+  if (recent.length < 2) return null;
+  const first = recent[0], last = recent[recent.length-1];
+  const rest = getRestsBetween(first, last);
+  return (last.elapsed - first.elapsed - rest) / (last.km - first.km);
+}
+
+function setStart() {
+  const v = document.getElementById('start-time').value;
+  const s = timeToSec(v);
+  if (!s && s !== 0) { setMsg('スタート時刻を入力してください'); return; }
+  startSec = s;
+  document.getElementById('start-display').textContent = `スタート: ${v}`;
+  setMsg(''); render();
+}
+
+function setMsg(m) { document.getElementById('msg').textContent = m; }
+
+function quickSplit() {
+  if (startSec === null) { setMsg('先にスタート時刻をセット'); return; }
+  const km = parseFloat(document.getElementById('quick-km').value);
+  if (isNaN(km) || km <= 0) { setMsg('キロ地点を入力してください'); return; }
+  if (entries.some(e => e.type==='split' && Math.abs(e.km-km) < 0.05)) { setMsg(`${km}km付近はすでに記録済みです`); return; }
+  const cs = nowSec(), el = elapsed(cs);
+  if (el < 0) { setMsg('スタート前の時刻です'); return; }
+  entries.push({ type: 'split', km, clockSec: cs, elapsed: el, note: '' });
+  entries.sort((a, b) => a.elapsed - b.elapsed);
+  setMsg(''); render();
+}
+
+function quickRestStart() {
+  if (startSec === null) { setMsg('先にスタート時刻をセット'); return; }
+  if (isResting()) { setMsg('すでに休憩中です'); return; }
+  const cs = nowSec(), el = elapsed(cs);
+  entries.push({ type: 'rest', clockSec: cs, elapsed: el, note: '' });
+  setMsg('');
+  document.getElementById('btn-rest-start').disabled = true;
+  document.getElementById('btn-rest-end').disabled = false;
+  startRestTimer(); render();
+}
+
+function quickRestEnd() {
+  const lr = entries.find(e => e.type==='rest' && !e.restDuration);
+  if (!lr) { setMsg('休憩開始が記録されていません'); return; }
+  const cs = nowSec(), el = elapsed(cs);
+  if (el <= lr.elapsed) { setMsg('時刻が開始より前です'); return; }
+  lr.restDuration = el - lr.elapsed; lr.restEndClock = cs;
+  document.getElementById('btn-rest-start').disabled = false;
+  document.getElementById('btn-rest-end').disabled = true;
+  stopRestTimer(); setMsg(''); render();
+}
+
+function startRestTimer() {
+  stopRestTimer();
+  const re = entries.find(e => e.type==='rest' && !e.restDuration);
+  if (!re) return;
+  document.getElementById('rest-indicator').style.display = 'flex';
+  restTimerInterval = setInterval(() => {
+    const dur = elapsed(nowSec()) - re.elapsed;
+    document.getElementById('rest-timer-display').textContent = fmtElapsed(Math.max(0, dur));
+  }, 1000);
+}
+
+function stopRestTimer() {
+  if (restTimerInterval) { clearInterval(restTimerInterval); restTimerInterval = null; }
+  document.getElementById('rest-indicator').style.display = 'none';
+}
+
+function onTypeChange() {
+  document.getElementById('f-km').style.display = document.getElementById('entry-type').value === 'rest_end' ? 'none' : '';
+}
+
+function addEntry() {
+  if (startSec === null) { setMsg('先にスタート時刻をセット'); return; }
+  const type = document.getElementById('entry-type').value;
+  const cs = timeToSec(document.getElementById('entry-clock').value);
+  const note = document.getElementById('entry-note').value;
+  if (!cs && cs !== 0) { setMsg('時刻を入力してください'); return; }
+  const el = elapsed(cs);
+  if (el < 0) { setMsg('スタート前の時刻です'); return; }
+  if (type !== 'rest_end') {
+    const km = parseFloat(document.getElementById('entry-km').value);
+    if (isNaN(km) || km <= 0) { setMsg('キロ地点を正しく入力してください'); return; }
+    if (type==='split' && entries.some(e=>e.type==='split'&&Math.abs(e.km-km)<0.05)) { setMsg(`${km}km付近はすでに記録済みです`); return; }
+    entries.push({ type, km, clockSec: cs, elapsed: el, note });
+  } else {
+    const lr = [...entries].reverse().find(e => e.type==='rest' && !e.restDuration);
+    if (!lr) { setMsg('休憩開始が未記録です'); return; }
+    if (el <= lr.elapsed) { setMsg('休憩終了は開始より後にしてください'); return; }
+    lr.restDuration = el - lr.elapsed; lr.restEndClock = cs;
+    if (!isResting()) { document.getElementById('btn-rest-start').disabled=false; document.getElementById('btn-rest-end').disabled=true; stopRestTimer(); }
+  }
+  entries.sort((a, b) => a.elapsed - b.elapsed);
+  document.getElementById('entry-clock').value = '';
+  document.getElementById('entry-km').value = '';
+  document.getElementById('entry-note').value = '';
+  setMsg(''); render();
+}
+
+function deleteEntry(i) {
+  const e = entries[i];
+  if (e.type==='rest' && !e.restDuration) { stopRestTimer(); document.getElementById('btn-rest-start').disabled=false; document.getElementById('btn-rest-end').disabled=true; }
+  entries.splice(i, 1); render();
+}
+
+function addCustomTarget() {
+  const v = parseFloat(document.getElementById('custom-km').value);
+  if (isNaN(v) || v <= 0) { setMsg('正しい数値を入力してください'); return; }
+  if (customTargets.includes(v)) { setMsg('すでに追加済みです'); return; }
+  customTargets.push(v); customTargets.sort((a,b)=>a-b);
+  document.getElementById('custom-km').value = '';
+  renderCustomTags(); renderPredictions();
+}
+
+function removeCustomTarget(v) { customTargets = customTargets.filter(x => x !== v); renderCustomTags(); renderPredictions(); }
+
+function renderCustomTags() {
+  document.getElementById('custom-tags').innerHTML = customTargets.map(v =>
+    `<span class="badge b-teal" style="cursor:pointer;padding:4px 10px;font-size:12px" onclick="removeCustomTarget(${v})">${v}km <i class="ti ti-x" style="font-size:10px"></i></span>`
+  ).join('');
+}
+
+function render() { renderSummary(); renderTable(); renderPredictions(); if (document.getElementById('pane-chart').style.display !== 'none') renderChart(); }
+
+function renderSummary() {
+  const sp = getSplits(), l = sp[sp.length-1];
+  document.getElementById('s-km').textContent = l ? `${l.km}km` : '—';
+  const modeVal = parseInt(document.getElementById('pace-mode').value);
+  const modeLabel = modeVal===0 ? '全平均' : modeVal===1 ? '直近1km' : `直近${modeVal}km`;
+  const curPace = getPaceForPrediction();
+  document.getElementById('s-pace').textContent = fmtPace(curPace);
+  document.getElementById('s-pace-label').textContent = `/ km（${modeLabel}）`;
+  if (sp.length >= 2) {
+    const last2=sp[sp.length-1], prev2=sp[sp.length-2];
+    const rest2 = getRestsBetween(prev2, last2);
+    const lap = (last2.elapsed - prev2.elapsed - rest2) / (last2.km - prev2.km);
+    document.getElementById('s-avg').textContent = fmtPace(lap);
+  } else document.getElementById('s-avg').textContent = '—';
+  if (curPace && l) {
+    const rem = TOTAL - l.km;
+    if (rem > 0) {
+      document.getElementById('s-finish').textContent = secToClockStr(l.clockSec + rem * curPace);
+      document.getElementById('s-finish-label').textContent = goalName;
+    } else {
+      document.getElementById('s-finish').textContent = '完走';
+      document.getElementById('s-finish-label').textContent = '';
+    }
+  } else { document.getElementById('s-finish').textContent = '—'; document.getElementById('s-finish-label').textContent = ''; }
+}
+
+function renderTable() {
+  const tbody = document.getElementById('records-body');
+  if (!entries.length) { tbody.innerHTML = '<tr><td colspan="7"><div class="empty"><i class="ti ti-flag"></i><br>まだ記録がありません</div></td></tr>'; return; }
+  const sp = getSplits();
+  let html = '';
+  [...entries].sort((a,b)=>a.elapsed-b.elapsed).forEach(e => {
+    const ri = entries.indexOf(e);
+    if (e.type === 'split') {
+      const prev = sp.filter(s=>s.km<e.km).pop();
+      let lap=null, pace=null;
+      if (prev) { const rest=getRestsBetween(prev,e); lap=e.elapsed-prev.elapsed-rest; pace=lap/(e.km-prev.km); }
+      const pc = pace&&pace<5*60?'b-green':pace&&pace<7*60?'b-blue':'b-amber';
+      html += `<tr><td><span class="badge b-blue">${e.km}km</span></td><td>${secToClockStr(e.clockSec)}</td><td>${fmtElapsed(e.elapsed)}</td><td>${lap?fmtElapsed(lap):'—'}</td><td>${pace?`<span class="badge ${pc}">${fmtPace(pace)}/km</span>`:'—'}</td><td style="color:var(--text2)">${e.note||''}</td><td><button class="btn btn-sm btn-danger" onclick="deleteEntry(${ri})"><i class="ti ti-trash"></i></button></td></tr>`;
+    } else if (e.type === 'rest') {
+      const dur = e.restDuration ? fmtElapsed(e.restDuration) : '計測中...';
+      html += `<tr><td>—</td><td>${secToClockStr(e.clockSec)}</td><td>${fmtElapsed(e.elapsed)}</td><td colspan="2"><span class="badge b-red"><i class="ti ti-coffee" style="font-size:11px"></i> 休憩 ${dur}${e.note?' · '+e.note:''}</span></td><td></td><td><button class="btn btn-sm btn-danger" onclick="deleteEntry(${ri})"><i class="ti ti-trash"></i></button></td></tr>`;
+    }
+  });
+  tbody.innerHTML = html;
+}
+
+function renderPredictions() {
+  const grid = document.getElementById('predict-grid');
+  const sp = getSplits();
+  if (!sp.length) { grid.innerHTML = '<div class="empty" style="grid-column:1/-1">記録を追加すると予測が表示されます</div>'; return; }
+  const pace = getPaceForPrediction(), l = sp[sp.length-1];
+  if (!pace) {
+    const modeVal = parseInt(document.getElementById('pace-mode').value);
+    const need = modeVal===0 ? 2 : modeVal+1;
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1">${need}地点以上の記録が必要です</div>`; return;
+  }
+  const allTargets = [...new Set([...getDefaultTargets(), ...customTargets])].sort((a,b)=>a-b);
+  let html = '';
+  allTargets.forEach(km => {
+    if (km <= l.km) return;
+    const remKm = km - l.km;
+    const predEl = l.elapsed + remKm * pace;
+    const predClock = l.clockSec + remKm * pace;
+    const isNext = km === allTargets.find(t => t > l.km);
+    const isGoal = Math.abs(km - TOTAL) < 0.001;
+    const isCustom = customTargets.includes(km);
+    const label = Math.abs(km-21.0975)<0.001&&Math.abs(TOTAL-42.195)<0.01 ? 'ハーフ' : isGoal ? `ゴール (${TOTAL}km)` : `${km}km`;
+    const bdg = isGoal ? 'b-green' : isCustom ? 'b-teal' : 'b-gray';
+    html += `<div class="pcard${isNext?' pcard-hl':''}"><div class="pcard-km"><span class="badge ${bdg}">${label}</span></div><div class="pcard-time">${secToClockStr(predClock)}</div><div class="pcard-eta">あと ${fmtElapsed(predEl-l.elapsed)}</div></div>`;
+  });
+  if (!html) html = '<div class="empty" style="grid-column:1/-1">ゴール通過済みです！</div>';
+  grid.innerHTML = html;
+}
+
+function renderChart() {
+  const sp = getSplits();
+  if (sp.length < 2) { if (chartInst) { chartInst.destroy(); chartInst=null; } return; }
+  const labels=[], data=[];
+  sp.forEach((s,i) => {
+    if (!i) return;
+    const prev=sp[i-1], rest=getRestsBetween(prev,s);
+    const lap=s.elapsed-prev.elapsed-rest, pace=lap/(s.km-prev.km)/60;
+    labels.push(`${s.km}km`); data.push(Math.round(pace*100)/100);
+  });
+  const dark = window.matchMedia('(prefers-color-scheme:dark)').matches;
+  const gc = dark?'rgba(255,255,255,0.08)':'rgba(0,0,0,0.07)', tc = dark?'#aaa':'#888';
+  if (chartInst) chartInst.destroy();
+  chartInst = new Chart(document.getElementById('pace-chart'), {
+    type: 'line',
+    data: { labels, datasets: [{ label: 'ペース', data, borderColor: '#378ADD', backgroundColor: 'rgba(55,138,221,0.1)', tension: .35, pointRadius: 4, fill: true }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+      scales: {
+        y: { grid: { color: gc }, ticks: { color: tc, font: { size: 11 }, callback: v => { const m=Math.floor(v),s=Math.round((v-m)*60); return `${m}'${String(s).padStart(2,'0')}`; } } },
+        x: { grid: { color: gc }, ticks: { color: tc, font: { size: 11 } } }
+      }
+    }
+  });
+}
+
+function showTab(name) {
+  ['records','predict','chart'].forEach(t => {
+    document.getElementById('pane-'+t).style.display = t===name ? '' : 'none';
+    document.getElementById('tab-'+t).classList.toggle('active', t===name);
+  });
+  if (name==='chart') renderChart();
+}
+
+const n = new Date();
+document.getElementById('start-time').value = `${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:00`;
+</script>
+</body>
+</html>
