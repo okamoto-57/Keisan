@@ -3,161 +3,136 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#ffffff">
 <title>マラソン ペーストラッカー</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-  :root {
-    --bg: #ffffff;
-    --bg2: #f5f5f3;
-    --bg3: #efefed;
-    --text: #1a1a19;
-    --text2: #6b6b68;
-    --text3: #9e9e9b;
-    --border: rgba(0,0,0,0.15);
-    --border2: rgba(0,0,0,0.25);
-    --info-bg: #E6F1FB;
-    --info-text: #0C447C;
-    --danger-bg: #FCEBEB;
-    --danger-text: #791F1F;
-    --success-bg: #EAF3DE;
-    --success-text: #27500A;
-    --warning-bg: #FAEEDA;
-    --warning-text: #633806;
-    --radius: 8px;
-    --radius-lg: 12px;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #1c1c1a;
-      --bg2: #252523;
-      --bg3: #2e2e2b;
-      --text: #f0f0ee;
-      --text2: #a0a09d;
-      --text3: #6b6b68;
-      --border: rgba(255,255,255,0.12);
-      --border2: rgba(255,255,255,0.22);
-      --info-bg: #0c2e4a;
-      --info-text: #85B7EB;
-      --danger-bg: #3a1a1a;
-      --danger-text: #F09595;
-      --success-bg: #1a2e0e;
-      --success-text: #97C459;
-      --warning-bg: #2e1e06;
-      --warning-text: #EF9F27;
-    }
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg3); color: var(--text); min-height: 100vh; }
-  .container { max-width: 720px; margin: 0 auto; padding: 1rem; }
-  h1 { font-size: 20px; font-weight: 500; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px; }
-  .grid4 { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; margin-bottom: 1rem; }
-  .metric { background: var(--bg2); border-radius: var(--radius); padding: .75rem 1rem; }
-  .mlabel { font-size: 11px; color: var(--text2); margin-bottom: 4px; }
-  .mval { font-size: 18px; font-weight: 500; }
-  .msub { font-size: 11px; color: var(--text3); margin-top: 2px; }
-  .card { background: var(--bg); border: .5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 1rem; }
-  .stitle { font-size: 14px; font-weight: 500; margin-bottom: .75rem; display: flex; align-items: center; gap: 6px; }
-  .row { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; margin-bottom: .5rem; }
-  .field { display: flex; flex-direction: column; gap: 4px; }
-  .field label { font-size: 12px; color: var(--text2); }
-  .field input, .field select { height: 36px; padding: 0 10px; border: .5px solid var(--border2); border-radius: var(--radius); background: var(--bg); color: var(--text); font-size: 14px; }
-  .field input:focus, .field select:focus { outline: none; box-shadow: 0 0 0 2px var(--info-text); }
-  .btn { height: 36px; padding: 0 14px; border: .5px solid var(--border2); border-radius: var(--radius); background: transparent; color: var(--text); font-size: 13px; cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; }
-  .btn:hover { background: var(--bg2); }
-  .btn:active { transform: scale(.98); }
-  .btn-primary { background: var(--info-bg); color: var(--info-text); border-color: transparent; }
-  .btn-primary:hover { opacity: .85; }
-  .btn-danger { background: var(--danger-bg); color: var(--danger-text); border-color: transparent; }
-  .btn-warning { background: var(--warning-bg); color: var(--warning-text); border-color: transparent; }
-  .btn-warning:hover { opacity: .85; }
-  .btn-success { background: var(--success-bg); color: var(--success-text); border-color: transparent; }
-  .btn-success:hover { opacity: .85; }
-  .btn-sm { height: 28px; padding: 0 10px; font-size: 12px; }
-  .btn-lg { height: 52px; padding: 0 20px; font-size: 15px; font-weight: 500; border-radius: var(--radius-lg); }
-  .msg { font-size: 12px; color: var(--danger-text); min-height: 16px; margin-top: .25rem; }
-  .hint { font-size: 12px; color: var(--text3); margin-bottom: .75rem; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
-  th { font-size: 11px; font-weight: 500; color: var(--text2); text-align: left; padding: 6px 8px; border-bottom: .5px solid var(--border); }
-  td { padding: 7px 8px; border-bottom: .5px solid var(--border); vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  tr:last-child td { border-bottom: none; }
-  .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; }
-  .b-blue { background: #E6F1FB; color: #0C447C; }
-  .b-green { background: #EAF3DE; color: #27500A; }
-  .b-amber { background: #FAEEDA; color: #633806; }
-  .b-gray { background: #F1EFE8; color: #444441; }
-  .b-red { background: #FCEBEB; color: #791F1F; }
-  .b-teal { background: #E1F5EE; color: #085041; }
-  .tab-row { display: flex; gap: 4px; margin-bottom: 1rem; flex-wrap: wrap; }
-  .tab { padding: 5px 14px; font-size: 13px; border-radius: 20px; border: .5px solid var(--border); cursor: pointer; background: transparent; color: var(--text2); }
-  .tab.active { background: var(--info-bg); color: var(--info-text); border-color: transparent; }
-  .pgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
-  .pcard { background: var(--bg2); border-radius: var(--radius); padding: .65rem .75rem; text-align: center; }
-  .pcard-hl { border: 2px solid var(--info-text); }
-  .pcard-km { font-size: 11px; color: var(--text2); margin-bottom: 3px; }
-  .pcard-time { font-size: 15px; font-weight: 500; }
-  .pcard-eta { font-size: 11px; color: var(--text3); margin-top: 2px; }
-  .empty { text-align: center; padding: 2rem; color: var(--text3); font-size: 13px; }
-  .chart-wrap { position: relative; height: 200px; }
-  .rest-indicator { display: flex; align-items: center; gap: 8px; padding: .5rem .75rem; background: var(--danger-bg); border-radius: var(--radius); font-size: 13px; color: var(--danger-text); margin-bottom: .75rem; }
-  .rest-timer { font-weight: 500; font-size: 15px; }
-  .divider { height: .5px; background: var(--border); margin: .75rem 0; }
-  .preset-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: .5rem; }
-  .preset-btn { height: 30px; padding: 0 12px; font-size: 12px; border: .5px solid var(--border2); border-radius: var(--radius); background: transparent; color: var(--text2); cursor: pointer; }
-  .preset-btn:hover { background: var(--bg2); }
-  .preset-btn.selected { background: var(--info-bg); color: var(--info-text); border-color: transparent; }
-  .big-btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: .75rem; }
-  details summary { font-size: 13px; color: var(--text2); cursor: pointer; user-select: none; list-style: none; display: flex; align-items: center; gap: 6px; }
-  details summary::-webkit-details-marker { display: none; }
-  @media (max-width: 500px) {
-    .grid4 { grid-template-columns: repeat(2, 1fr); }
-    .btn-lg { flex: 1; }
-    h1 { font-size: 17px; }
-  }
+:root{--bg:#fff;--bg2:#f5f5f3;--bg3:#efefed;--text:#1a1a19;--text2:#6b6b68;--text3:#9e9e9b;--border:rgba(0,0,0,.15);--border2:rgba(0,0,0,.25);--ib:#E6F1FB;--it:#0C447C;--db:#FCEBEB;--dt:#791F1F;--sb:#EAF3DE;--st:#27500A;--wb:#FAEEDA;--wt:#633806;--r:8px;--rl:12px}
+@media(prefers-color-scheme:dark){:root{--bg:#1c1c1a;--bg2:#252523;--bg3:#2e2e2b;--text:#f0f0ee;--text2:#a0a09d;--text3:#6b6b68;--border:rgba(255,255,255,.12);--border2:rgba(255,255,255,.22);--ib:#0c2e4a;--it:#85B7EB;--db:#3a1a1a;--dt:#F09595;--sb:#1a2e0e;--st:#97C459;--wb:#2e1e06;--wt:#EF9F27}}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg3);color:var(--text);min-height:100vh}
+.container{max-width:780px;margin:0 auto;padding:1rem}
+h1{font-size:19px;font-weight:500;margin-bottom:1rem;display:flex;align-items:center;gap:8px}
+.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:1rem}
+.grid5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:1rem}
+.metric{background:var(--bg2);border-radius:var(--r);padding:.7rem .9rem}
+.mlabel{font-size:11px;color:var(--text2);margin-bottom:3px}
+.mval{font-size:17px;font-weight:500;line-height:1.2}
+.msub{font-size:11px;color:var(--text3);margin-top:2px}
+.mval-savings{font-size:20px;font-weight:600}
+.savings-pos{color:#27500A}
+.savings-neg{color:#791F1F}
+@media(prefers-color-scheme:dark){.savings-pos{color:#97C459}.savings-neg{color:#F09595}}
+.card{background:var(--bg);border:.5px solid var(--border);border-radius:var(--rl);padding:1rem 1.2rem;margin-bottom:1rem}
+.stitle{font-size:14px;font-weight:500;margin-bottom:.7rem;display:flex;align-items:center;gap:6px}
+.row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:.5rem}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:12px;color:var(--text2)}
+input,select{height:36px;padding:0 10px;border:.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--text);font-size:14px;font-family:inherit}
+input:focus,select:focus{outline:none;box-shadow:0 0 0 2px var(--it)}
+.btn{height:36px;padding:0 13px;border:.5px solid var(--border2);border-radius:var(--r);background:transparent;color:var(--text);font-size:13px;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:5px;font-family:inherit}
+.btn:hover{background:var(--bg2)}
+.btn:active{transform:scale(.98)}
+.btn-p{background:var(--ib);color:var(--it);border-color:transparent}
+.btn-p:hover{opacity:.85}
+.btn-d{background:var(--db);color:var(--dt);border-color:transparent}
+.btn-w{background:var(--wb);color:var(--wt);border-color:transparent}
+.btn-w:hover{opacity:.85}
+.btn-s{background:var(--sb);color:var(--st);border-color:transparent}
+.btn-s:hover{opacity:.85}
+.btn-sm{height:28px;padding:0 10px;font-size:12px}
+.btn-lg{height:52px;padding:0 18px;font-size:15px;font-weight:500;border-radius:var(--rl)}
+.msg{font-size:12px;color:var(--dt);min-height:16px;margin-top:.25rem}
+.hint{font-size:12px;color:var(--text3);margin-bottom:.6rem}
+.divider{height:.5px;background:var(--border);margin:.7rem 0}
+table{width:100%;border-collapse:collapse;font-size:12.5px;table-layout:fixed}
+th{font-size:11px;font-weight:500;color:var(--text2);text-align:left;padding:5px 7px;border-bottom:.5px solid var(--border)}
+td{padding:6px 7px;border-bottom:.5px solid var(--border);vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+.badge{display:inline-block;font-size:11px;padding:2px 7px;border-radius:20px;font-weight:500}
+.b-blue{background:#E6F1FB;color:#0C447C}
+.b-green{background:#EAF3DE;color:#27500A}
+.b-amber{background:#FAEEDA;color:#633806}
+.b-gray{background:#F1EFE8;color:#444441}
+.b-red{background:#FCEBEB;color:#791F1F}
+.b-teal{background:#E1F5EE;color:#085041}
+.b-plus{background:#EAF3DE;color:#27500A;font-weight:600}
+.b-minus{background:#FCEBEB;color:#791F1F;font-weight:600}
+.tab-row{display:flex;gap:4px;margin-bottom:1rem;flex-wrap:wrap}
+.tab{padding:5px 13px;font-size:13px;border-radius:20px;border:.5px solid var(--border);cursor:pointer;background:transparent;color:var(--text2);font-family:inherit}
+.tab.active{background:var(--ib);color:var(--it);border-color:transparent}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:8px}
+.pcard{background:var(--bg2);border-radius:var(--r);padding:.6rem .7rem;text-align:center}
+.pcard-hl{border:2px solid var(--it)}
+.pcard-km{font-size:11px;color:var(--text2);margin-bottom:3px}
+.pcard-time{font-size:14px;font-weight:500}
+.pcard-eta{font-size:11px;color:var(--text3);margin-top:2px}
+.pcard-diff{font-size:11px;margin-top:2px;font-weight:600}
+.empty{text-align:center;padding:2rem;color:var(--text3);font-size:13px}
+.chart-wrap{position:relative;height:190px}
+.rest-ind{display:flex;align-items:center;gap:8px;padding:.5rem .75rem;background:var(--db);border-radius:var(--r);font-size:13px;color:var(--dt);margin-bottom:.75rem}
+.big-btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:.75rem}
+details summary{font-size:13px;color:var(--text2);cursor:pointer;user-select:none;list-style:none;display:flex;align-items:center;gap:6px}
+details summary::-webkit-details-marker{display:none}
+.preset-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:.5rem}
+.preset-btn{height:30px;padding:0 11px;font-size:12px;border:.5px solid var(--border2);border-radius:var(--r);background:transparent;color:var(--text2);cursor:pointer;font-family:inherit}
+.preset-btn:hover{background:var(--bg2)}
+.preset-btn.selected{background:var(--ib);color:var(--it);border-color:transparent}
+.pace-tbl-preview{max-height:180px;overflow-y:auto;border:.5px solid var(--border);border-radius:var(--r);font-size:12px}
+.pace-tbl-preview table{font-size:12px}
+.upload-zone{border:1.5px dashed var(--border2);border-radius:var(--r);padding:1.5rem;text-align:center;cursor:pointer;transition:.2s}
+.upload-zone:hover{background:var(--bg2)}
+.section-tab{display:flex;border-bottom:.5px solid var(--border);margin-bottom:1rem}
+.stab{padding:6px 14px;font-size:13px;border:none;background:transparent;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;font-family:inherit}
+.stab.active{color:var(--it);border-bottom-color:var(--it);font-weight:500}
+.compare-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.compare-tbl th{font-size:11px;font-weight:500;color:var(--text2);text-align:left;padding:5px 10px;border-bottom:.5px solid var(--border);background:var(--bg2)}
+.compare-tbl td{padding:7px 10px;border-bottom:.5px solid var(--border);vertical-align:middle}
+.pace-chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:3px 9px;border-radius:20px;font-weight:500}
+.chip-auto{background:#E6F1FB;color:#0C447C}
+.chip-manual{background:#EEEDFE;color:#3C3489}
+.rm-btn{background:none;border:none;cursor:pointer;color:var(--text3);padding:1px 4px;font-size:12px;line-height:1;font-family:inherit}
+.rm-btn:hover{color:var(--dt)}
+@media(max-width:500px){.grid4{grid-template-columns:repeat(2,1fr)}.grid5{grid-template-columns:repeat(3,1fr)}.btn-lg{flex:1}}
 </style>
 </head>
 <body>
 <div class="container">
-
 <h1><i class="ti ti-run"></i> マラソン ペーストラッカー</h1>
 
-<div class="grid4">
+<div class="grid5" id="summary-cards">
   <div class="metric"><div class="mlabel">通過済み</div><div class="mval" id="s-km">— km</div></div>
   <div class="metric"><div class="mlabel">現在ペース</div><div class="mval" id="s-pace">—</div><div class="msub" id="s-pace-label">/ km</div></div>
-  <div class="metric"><div class="mlabel">直前ラップ</div><div class="mval" id="s-avg">—</div><div class="msub">/ km</div></div>
-  <div class="metric"><div class="mlabel">ゴール予想時刻</div><div class="mval" id="s-finish">—</div><div class="msub" id="s-finish-label"></div></div>
+  <div class="metric"><div class="mlabel">直前ラップ</div><div class="mval" id="s-lap">—</div><div class="msub">/ km</div></div>
+  <div class="metric"><div class="mlabel">ゴール予想</div><div class="mval" id="s-finish">—</div><div class="msub" id="s-finish-label"></div></div>
+  <div class="metric"><div class="mlabel">目標との差</div><div class="mval mval-savings" id="s-savings">—</div><div class="msub" id="s-savings-label"></div></div>
 </div>
 
+<!-- 設定 -->
 <div class="card">
   <div class="stitle"><i class="ti ti-settings"></i> 基本設定</div>
   <div class="row">
-    <div class="field">
-      <label>スタート時刻</label>
-      <input type="time" id="start-time" step="1" style="width:130px">
-    </div>
-    <button class="btn btn-primary" onclick="setStart()"><i class="ti ti-check"></i> セット</button>
+    <div class="field"><label>スタート時刻</label><input type="time" id="start-time" step="1" style="width:130px"></div>
+    <button class="btn btn-p" onclick="setStart()"><i class="ti ti-check"></i> セット</button>
     <span id="start-display" style="font-size:13px;color:var(--text2);align-self:center"></span>
   </div>
   <div class="divider"></div>
   <div class="stitle" style="margin-bottom:.5rem"><i class="ti ti-flag"></i> ゴール距離</div>
   <div class="row">
-    <div class="field">
-      <label>距離 (km)</label>
-      <input type="number" id="goal-km" min="0.1" max="9999" step="0.001" value="42.195" style="width:120px" oninput="onGoalChange()">
-    </div>
-    <span id="goal-display" style="font-size:13px;color:var(--text2);align-self:flex-end;padding-bottom:8px">フルマラソン (42.195km)</span>
+    <div class="field"><label>距離 (km)</label><input type="number" id="goal-km" min="0.1" max="9999" step="0.001" value="80" style="width:110px" oninput="onGoalChange()"></div>
+    <span id="goal-display" style="font-size:13px;color:var(--text2);align-self:flex-end;padding-bottom:8px">80km</span>
   </div>
   <div class="preset-row">
-    <button class="preset-btn selected" onclick="setGoalPreset(42.195,'フルマラソン',this)">フル 42.195</button>
+    <button class="preset-btn" onclick="setGoalPreset(42.195,'フルマラソン',this)">フル 42.195</button>
     <button class="preset-btn" onclick="setGoalPreset(21.0975,'ハーフ',this)">ハーフ 21.0975</button>
+    <button class="preset-btn" onclick="setGoalPreset(80,'80km',this)">80km</button>
     <button class="preset-btn" onclick="setGoalPreset(10,'10km',this)">10km</button>
     <button class="preset-btn" onclick="setGoalPreset(5,'5km',this)">5km</button>
-    <button class="preset-btn" onclick="setGoalPreset(3,'3km',this)">3km</button>
   </div>
   <div class="divider"></div>
   <div class="stitle" style="margin-bottom:.5rem"><i class="ti ti-speedboat"></i> ペース計算の基準</div>
-  <select id="pace-mode" style="height:36px;font-size:13px;padding:0 10px;border:.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text)" onchange="render()">
+  <select id="pace-mode" style="height:36px;font-size:13px;padding:0 10px;width:180px" onchange="render()">
     <option value="2">直近 2 km</option>
     <option value="1">直近 1 km</option>
     <option value="3">直近 3 km</option>
@@ -166,88 +141,76 @@
   </select>
 </div>
 
+<!-- 目標ペース表 -->
+<div class="card">
+  <div class="stitle"><i class="ti ti-table-import"></i> 目標ペース表（Excelから読み込み）</div>
+  <div class="hint">Excelファイルをアップロードすると目標通過時刻との貯金/借金を自動表示します</div>
+  <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()" ondragover="event.preventDefault()" ondrop="handleDrop(event)">
+    <i class="ti ti-file-spreadsheet" style="font-size:28px;color:var(--text3);display:block;margin-bottom:.5rem"></i>
+    <div style="font-size:13px;color:var(--text2)">クリックまたはドラッグ&ドロップでExcelファイルを選択</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px">.xlsx / .xls 対応</div>
+  </div>
+  <input type="file" id="file-input" accept=".xlsx,.xls" style="display:none" onchange="handleFile(event)">
+  <div id="pace-table-status" style="font-size:13px;color:var(--text2);margin-top:.5rem"></div>
+  <div id="pace-table-preview" style="margin-top:.75rem"></div>
+  <div id="sheet-selector" style="margin-top:.5rem;display:none">
+    <div class="hint">シートを選択してください：</div>
+    <div id="sheet-buttons" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+  </div>
+</div>
+
+<!-- ワンタッチ記録 -->
 <div class="card">
   <div class="stitle"><i class="ti ti-target"></i> ワンタッチ記録</div>
   <div class="hint">ボタンを押すと現在時刻で即記録します</div>
-
-  <div id="rest-indicator" class="rest-indicator" style="display:none">
-    <i class="ti ti-coffee"></i>
-    <span>休憩中</span>
-    <span class="rest-timer" id="rest-timer-display">0:00</span>
-    <span style="font-size:12px">経過</span>
+  <div id="rest-ind" class="rest-ind" style="display:none">
+    <i class="ti ti-coffee"></i><span>休憩中</span>
+    <span style="font-weight:500;font-size:15px" id="rest-timer">0:00</span><span style="font-size:12px">経過</span>
   </div>
-
   <div class="big-btn-row">
     <div class="field" style="flex-shrink:0">
       <label>キロ地点</label>
-      <input type="number" id="quick-km" min="0.1" max="9999" step="0.1" placeholder="例: 5" style="width:100px;height:52px;font-size:16px">
+      <input type="number" id="quick-km" min="0.1" max="9999" step="0.1" placeholder="例: 5" style="width:95px;height:52px;font-size:16px">
     </div>
-    <button class="btn btn-lg btn-primary" onclick="quickSplit()" style="align-self:flex-end;flex:1;min-width:130px">
-      <i class="ti ti-map-pin"></i> 今の時刻で通過記録
-    </button>
+    <button class="btn btn-lg btn-p" onclick="quickSplit()" style="align-self:flex-end;flex:1;min-width:120px"><i class="ti ti-map-pin"></i> 今の時刻で通過記録</button>
   </div>
-
   <div class="divider"></div>
-
   <div class="big-btn-row">
-    <button class="btn btn-lg btn-warning" id="btn-rest-start" onclick="quickRestStart()" style="flex:1">
-      <i class="ti ti-player-pause"></i> 休憩 開始
-    </button>
-    <button class="btn btn-lg btn-success" id="btn-rest-end" onclick="quickRestEnd()" style="flex:1" disabled>
-      <i class="ti ti-player-play"></i> 休憩 終了（再出発）
-    </button>
+    <button class="btn btn-lg btn-w" id="btn-rest-start" onclick="quickRestStart()" style="flex:1"><i class="ti ti-player-pause"></i> 休憩 開始</button>
+    <button class="btn btn-lg btn-s" id="btn-rest-end" onclick="quickRestEnd()" style="flex:1" disabled><i class="ti ti-player-play"></i> 休憩 終了</button>
   </div>
-
   <div class="divider"></div>
-
   <details>
     <summary><i class="ti ti-pencil" style="font-size:14px"></i> 手動で時刻を指定して入力</summary>
     <div style="margin-top:.75rem">
       <div class="row">
-        <div class="field">
-          <label>種別</label>
-          <select id="entry-type" style="width:110px" onchange="onTypeChange()">
-            <option value="split">通過</option>
-            <option value="rest">休憩開始</option>
-            <option value="rest_end">休憩終了</option>
-          </select>
-        </div>
-        <div class="field" id="f-km">
-          <label>キロ地点</label>
-          <input type="number" id="entry-km" min="0.1" max="9999" step="0.1" placeholder="例: 34.5" style="width:110px">
-        </div>
-        <div class="field">
-          <label>通過時刻</label>
-          <input type="time" id="entry-clock" step="1" style="width:130px">
-        </div>
-        <div class="field">
-          <label>メモ</label>
-          <input type="text" id="entry-note" placeholder="給水など" style="width:100px">
-        </div>
-        <button class="btn btn-primary" onclick="addEntry()"><i class="ti ti-check"></i> 追加</button>
+        <div class="field"><label>種別</label><select id="entry-type" style="width:105px" onchange="onTypeChange()"><option value="split">通過</option><option value="rest">休憩開始</option><option value="rest_end">休憩終了</option></select></div>
+        <div class="field" id="f-km"><label>キロ地点</label><input type="number" id="entry-km" min="0.1" max="9999" step="0.1" placeholder="34.5" style="width:105px"></div>
+        <div class="field"><label>通過時刻</label><input type="time" id="entry-clock" step="1" style="width:125px"></div>
+        <div class="field"><label>メモ</label><input type="text" id="entry-note" placeholder="給水など" style="width:95px"></div>
+        <button class="btn btn-p" onclick="addEntry()"><i class="ti ti-check"></i> 追加</button>
       </div>
     </div>
   </details>
   <div class="msg" id="msg"></div>
 </div>
 
+<!-- 予測地点 -->
 <div class="card">
   <div class="stitle"><i class="ti ti-flag"></i> 予測地点の追加</div>
-  <div class="hint">デフォルト以外に予測したい地点（例: 34.5）を追加できます</div>
   <div class="row">
-    <div class="field">
-      <label>地点 (km)</label>
-      <input type="number" id="custom-km" min="0.1" max="9999" step="0.1" placeholder="例: 34.5" style="width:110px">
-    </div>
+    <div class="field"><label>地点 (km)</label><input type="number" id="custom-km" min="0.1" max="9999" step="0.1" placeholder="例: 34.5" style="width:110px"></div>
     <button class="btn" onclick="addCustomTarget()"><i class="ti ti-plus"></i> 追加</button>
   </div>
   <div id="custom-tags" style="display:flex;flex-wrap:wrap;gap:6px;min-height:8px"></div>
 </div>
 
+<!-- タブ -->
 <div class="card">
   <div class="tab-row">
     <button class="tab active" onclick="showTab('records')" id="tab-records">記録一覧</button>
     <button class="tab" onclick="showTab('predict')" id="tab-predict">通過予測</button>
+    <button class="tab" onclick="showTab('arrival')" id="tab-arrival">到着・地点予測</button>
     <button class="tab" onclick="showTab('chart')" id="tab-chart">ペースグラフ</button>
   </div>
 
@@ -255,25 +218,52 @@
     <div style="overflow-x:auto">
     <table>
       <thead><tr>
-        <th style="width:72px">地点</th>
-        <th style="width:72px">通過時刻</th>
-        <th style="width:68px">経過</th>
-        <th style="width:64px">ラップ</th>
-        <th style="width:76px">ペース</th>
+        <th style="width:66px">地点</th>
+        <th style="width:68px">通過時刻</th>
+        <th style="width:56px">経過</th>
+        <th style="width:58px">総合ラップ</th>
+        <th style="width:46px">休憩</th>
+        <th style="width:70px">走行ペース</th>
+        <th style="width:68px">目標時刻</th>
+        <th style="width:64px">貯金/借金</th>
         <th>メモ</th>
-        <th style="width:36px"></th>
+        <th style="width:30px"></th>
       </tr></thead>
-      <tbody id="records-body">
-        <tr><td colspan="7"><div class="empty"><i class="ti ti-flag"></i><br>まだ記録がありません</div></td></tr>
-      </tbody>
+      <tbody id="records-body"><tr><td colspan="10"><div class="empty"><i class="ti ti-flag"></i><br>まだ記録がありません</div></td></tr></tbody>
     </table>
     </div>
   </div>
 
   <div id="pane-predict" style="display:none">
-    <div class="pgrid" id="predict-grid">
-      <div class="empty" style="grid-column:1/-1">記録を追加すると予測が表示されます</div>
+    <div class="pgrid" id="predict-grid"><div class="empty" style="grid-column:1/-1">記録を追加すると予測が表示されます</div></div>
+  </div>
+
+  <div id="pane-arrival" style="display:none">
+    <div class="section-tab">
+      <button class="stab active" onclick="showSubTab('arr-dist')" id="stab-arr-dist"><i class="ti ti-map-pin" style="font-size:13px"></i> 到着時刻予測</button>
+      <button class="stab" onclick="showSubTab('arr-time')" id="stab-arr-time"><i class="ti ti-clock" style="font-size:13px"></i> 地点予測</button>
     </div>
+    <div id="pane-arr-dist">
+      <div class="hint">現在地点からの距離を入力すると、複数ペースで到着時刻を比較できます</div>
+      <div class="row" style="margin-bottom:.75rem">
+        <div class="field"><label>〇km先に到着する時刻</label><input type="number" id="arr-dist" min="0.1" max="200" step="0.1" placeholder="例: 1.5" style="width:120px" oninput="renderArrival()"></div>
+      </div>
+      <div id="arr-dist-result"></div>
+    </div>
+    <div id="pane-arr-time" style="display:none">
+      <div class="hint">時刻を入力すると、その時刻に何km地点にいるかを比較できます</div>
+      <div class="row" style="margin-bottom:.75rem">
+        <div class="field"><label>この時刻の地点</label><input type="time" id="arr-time" step="1" style="width:125px" oninput="renderArrival()"></div>
+      </div>
+      <div id="arr-time-result"></div>
+    </div>
+    <div class="divider"></div>
+    <div class="stitle" style="margin-bottom:.5rem;font-size:13px"><i class="ti ti-plus"></i> 比較ペースを追加</div>
+    <div class="row">
+      <div class="field"><label>ペース (分'秒/km)</label><input type="text" id="custom-pace-input" placeholder="例: 8'30" style="width:105px"></div>
+      <button class="btn" onclick="addCustomPace()"><i class="ti ti-plus"></i> 追加</button>
+    </div>
+    <div id="pace-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:.5rem"></div>
   </div>
 
   <div id="pane-chart" style="display:none">
@@ -285,300 +275,494 @@
 </div>
 
 <script>
-let TOTAL = 42.195;
-let goalName = 'フルマラソン';
-let startSec = null, entries = [], customTargets = [], chartInst = null, restTimerInterval = null;
+// ===== STATE =====
+let TOTAL=80, goalName='80km';
+let startSec=null, entries=[], customTargets=[], customPaces=[], chartInst=null, restTimerInterval=null;
+let paceTable=[];  // [{km, pace_sec, goal_sec, rest_sec, landmark}]
 
-function getDefaultTargets() {
-  const t = [];
-  if (TOTAL >= 1) t.push(1);
-  if (TOTAL >= 5) t.push(5);
-  if (TOTAL >= 10) t.push(10);
-  if (TOTAL >= 15) t.push(15);
-  if (TOTAL >= 20) t.push(20);
-  if (Math.abs(TOTAL - 42.195) < 0.01) t.push(21.0975);
-  if (TOTAL >= 25) t.push(25);
-  if (TOTAL >= 30) t.push(30);
-  if (TOTAL >= 35) t.push(35);
-  if (TOTAL >= 40) t.push(40);
-  t.push(TOTAL);
-  return [...new Set(t)].sort((a, b) => a - b);
+// ===== UTILS =====
+function nowSec(){const n=new Date();return n.getHours()*3600+n.getMinutes()*60+n.getSeconds();}
+function timeToSec(t){if(!t)return null;const p=t.split(':').map(Number);if(p.length===3)return p[0]*3600+p[1]*60+p[2];if(p.length===2)return p[0]*3600+p[1]*60;return null;}
+function secToClockStr(s,forceLong){s=Math.round(s);const day=Math.floor(s/86400);s=s%86400;const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),ss=s%60;if(day>0)return`${String(h+day*24).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;return`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;}
+function elapsedFrom(cs){if(startSec===null)return null;let d=cs-startSec;if(d<0)d+=86400;return d;}
+function fmtElapsed(s){s=Math.round(s);const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),ss=s%60;if(h>0)return`${h}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;return`${m}:${String(ss).padStart(2,'0')}`;}
+function fmtPace(spk){if(!spk||spk<=0||!isFinite(spk))return'—';const m=Math.floor(spk/60),s=Math.round(spk%60);return`${m}'${String(s).padStart(2,'0')}`;}
+function fmtDiff(diffSec){const abs=Math.abs(Math.round(diffSec));const m=Math.floor(abs/60),s=abs%60;const str=m>0?`${m}分${String(s).padStart(2,'0')}秒`:`${s}秒`;return diffSec>=0?`+${str}貯金`:`-${str}借金`;}
+function parsePaceStr(s){s=s.trim();const m1=s.match(/^(\d+)[''`](\d+)$/);if(m1)return parseInt(m1[1])*60+parseInt(m1[2]);const m2=s.match(/^(\d+):(\d+)$/);if(m2)return parseInt(m2[1])*60+parseInt(m2[2]);const m3=s.match(/^(\d+\.?\d*)$/);if(m3)return parseFloat(m3[1])*60;return null;}
+function getSplits(){return entries.filter(e=>e.type==='split').sort((a,b)=>a.km-b.km);}
+function getRestsBetween(e1,e2){return entries.filter(r=>r.type==='rest'&&r.restDuration&&r.elapsed>=e1.elapsed&&r.elapsed<=e2.elapsed).reduce((s,r)=>s+r.restDuration,0);}
+function isResting(){return entries.some(e=>e.type==='rest'&&!e.restDuration);}
+
+// ===== PACE TABLE =====
+function getTargetForKm(km){
+  if(!paceTable.length)return null;
+  // find exact or closest lower
+  let best=null;
+  for(const r of paceTable){if(Math.abs(r.km-km)<0.01)return r;if(r.km<=km)best=r;}
+  return best;
+}
+function getSavings(km,clockSec){
+  const t=getTargetForKm(km);
+  if(!t||t.goal_sec===null)return null;
+  // goal_sec may span >24h; clockSec is within 0-86400
+  // convert clockSec to same "timeline" as goal_sec
+  // goal_sec is seconds since epoch-of-day (can be >86400 for multi-day)
+  // We need to figure out which "day" clockSec is in
+  let cs = clockSec;
+  // If goal_sec > 86400, clock may have wrapped
+  // Simple heuristic: add multiples of 86400 until close to goal_sec
+  while(cs + 86400 < t.goal_sec - 3600) cs += 86400;
+  return t.goal_sec - cs; // positive = ahead of schedule (貯金), negative = behind (借金)
 }
 
-function nowSec() { const n = new Date(); return n.getHours() * 3600 + n.getMinutes() * 60 + n.getSeconds(); }
-function timeToSec(t) { if (!t) return null; const p = t.split(':').map(Number); if (p.length === 3) return p[0]*3600+p[1]*60+p[2]; if (p.length === 2) return p[0]*3600+p[1]*60; return null; }
-function secToClockStr(s) { s = ((Math.round(s) % 86400) + 86400) % 86400; const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),ss=s%60; return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`; }
-function elapsed(cs) { if (startSec === null) return null; let d = cs - startSec; if (d < 0) d += 86400; return d; }
-function fmtElapsed(s) { s=Math.round(s); const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),ss=s%60; if(h>0)return`${h}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`; return`${m}:${String(ss).padStart(2,'0')}`; }
-function fmtPace(spk) { if(!spk||spk<=0||!isFinite(spk))return'—'; const m=Math.floor(spk/60),s=Math.round(spk%60); return`${m}'${String(s).padStart(2,'0')}`; }
-function getSplits() { return entries.filter(e=>e.type==='split').sort((a,b)=>a.km-b.km); }
-function getRestsBetween(e1, e2) { return entries.filter(r=>r.type==='rest'&&r.restDuration&&r.elapsed>=e1.elapsed&&r.elapsed<=e2.elapsed).reduce((s,r)=>s+r.restDuration,0); }
-function isResting() { return entries.some(e=>e.type==='rest'&&!e.restDuration); }
+// ===== EXCEL IMPORT =====
+function handleDrop(e){e.preventDefault();const f=e.dataTransfer.files[0];if(f)processExcelFile(f);}
+function handleFile(e){const f=e.target.files[0];if(f)processExcelFile(f);}
 
-function setGoalPreset(km, name, btn) {
-  TOTAL = km; goalName = name;
-  document.getElementById('goal-km').value = km;
-  document.getElementById('goal-display').textContent = `${name} (${km}km)`;
-  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('selected'));
-  btn.classList.add('selected');
-  render();
+function processExcelFile(file){
+  document.getElementById('pace-table-status').textContent='読み込み中...';
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array',cellDates:true});
+      const sheets=wb.SheetNames;
+      if(sheets.length===1){
+        parseSheet(wb,sheets[0]);
+      } else {
+        document.getElementById('sheet-selector').style.display='';
+        const btns=document.getElementById('sheet-buttons');
+        btns.innerHTML='';
+        sheets.forEach(s=>{
+          const b=document.createElement('button');
+          b.className='btn btn-sm';b.textContent=s;
+          b.onclick=()=>parseSheet(wb,s);
+          btns.appendChild(b);
+        });
+        document.getElementById('pace-table-status').textContent=`${sheets.length}枚のシートが見つかりました。使用するシートを選択してください。`;
+      }
+    }catch(err){document.getElementById('pace-table-status').textContent='読み込みエラー: '+err.message;}
+  };
+  reader.readAsArrayBuffer(file);
 }
 
-function onGoalChange() {
-  const v = parseFloat(document.getElementById('goal-km').value);
-  if (isNaN(v) || v <= 0) return;
-  TOTAL = v;
-  const presets = { 42.195: 'フルマラソン', 21.0975: 'ハーフマラソン', 10: '10km', 5: '5km', 3: '3km' };
-  goalName = presets[v] || `${v}km`;
-  document.getElementById('goal-display').textContent = `${goalName} (${v}km)`;
-  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('selected'));
-  render();
-}
-
-function getPaceForPrediction() {
-  const sp = getSplits();
-  if (sp.length < 1) return null;
-  const modeVal = parseInt(document.getElementById('pace-mode').value);
-  if (modeVal === 0) {
-    if (sp.length < 2) return null;
-    const last = sp[sp.length-1];
-    const tr = entries.filter(r=>r.type==='rest'&&r.restDuration&&r.elapsed<=last.elapsed).reduce((s,r)=>s+r.restDuration,0);
-    return (last.elapsed - tr) / last.km;
+function parseSheet(wb,sheetName){
+  document.getElementById('sheet-selector').style.display='none';
+  const ws=wb.Sheets[sheetName];
+  const rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,dateNF:'HH:MM:SS'});
+  
+  // Find header row containing 距離 and 目標ペース
+  let headerRow=-1, kmCol=-1, paceCol=-1, goalCol=-1, restCol=-1, landmarkCol=-1;
+  for(let i=0;i<Math.min(rows.length,10);i++){
+    const r=rows[i];
+    for(let j=0;j<r.length;j++){
+      const v=String(r[j]||'');
+      if(v.includes('距離')&&kmCol<0)kmCol=j;
+      if(v.includes('目標ペース')&&paceCol<0)paceCol=j;
+      if(v.includes('目標時間')&&goalCol<0)goalCol=j;
+      if(v.includes('休憩')&&restCol<0)restCol=j;
+      if(v.includes('ランドマーク')&&landmarkCol<0)landmarkCol=j;
+    }
+    if(kmCol>=0&&paceCol>=0&&goalCol>=0){headerRow=i;break;}
   }
-  const recent = sp.slice(-modeVal);
-  if (recent.length < 2) return null;
-  const first = recent[0], last = recent[recent.length-1];
-  const rest = getRestsBetween(first, last);
-  return (last.elapsed - first.elapsed - rest) / (last.km - first.km);
+  
+  // If not found, try numeric detection
+  if(kmCol<0){
+    // heuristic: col 3 = km, col 7 = pace, col 9 = goal, col 10 = rest
+    kmCol=3;paceCol=7;goalCol=9;restCol=10;landmarkCol=1;
+  }
+
+  function parseTimeStr(v){
+    if(!v)return null;
+    v=String(v).trim();
+    const m=v.match(/(\d+):(\d+):(\d+)/);
+    if(m)return parseInt(m[1])*3600+parseInt(m[2])*60+parseInt(m[3]);
+    const m2=v.match(/(\d+):(\d+)/);
+    if(m2)return parseInt(m2[1])*3600+parseInt(m2[2])*60;
+    // Excel serial (0.xxx)
+    const n=parseFloat(v);
+    if(!isNaN(n)&&n>0&&n<1)return Math.round(n*86400);
+    return null;
+  }
+
+  const result=[];
+  for(let i=headerRow+1;i<rows.length;i++){
+    const r=rows[i];
+    const kmRaw=r[kmCol];
+    const km=parseFloat(kmRaw);
+    if(isNaN(km)||km<=0||km>500)continue;
+    const pace_sec=parseTimeStr(r[paceCol]);
+    const goal_sec=parseTimeStr(r[goalCol]);
+    const rest_sec=parseTimeStr(r[restCol]);
+    const landmark=r[landmarkCol]?String(r[landmarkCol]).trim():null;
+    if(goal_sec===null)continue;
+    result.push({km,pace_sec,goal_sec,rest_sec,landmark});
+  }
+
+  // Fix midnight crossings
+  if(result.length>1){
+    let prev=result[0].goal_sec,offset=0;
+    for(let i=1;i<result.length;i++){
+      let adj=result[i].goal_sec+offset;
+      if(adj<prev-600){offset+=86400;adj=result[i].goal_sec+offset;}
+      result[i].goal_sec=adj;
+      prev=adj;
+    }
+  }
+
+  paceTable=result;
+  document.getElementById('pace-table-status').textContent=`✓ "${sheetName}" から ${result.length} 地点を読み込みました`;
+  
+  // Preview
+  const prev=paceTable.slice(0,5);
+  let html='<div class="pace-tbl-preview"><table><thead><tr><th>km</th><th>目標ペース</th><th>目標通過時刻</th><th>休憩</th></tr></thead><tbody>';
+  prev.forEach(r=>{
+    html+=`<tr><td>${r.km}km</td><td>${r.pace_sec?fmtPace(r.pace_sec)+'/km':'—'}</td><td>${secToClockStr(r.goal_sec)}</td><td>${r.rest_sec?fmtElapsed(r.rest_sec):'—'}</td></tr>`;
+  });
+  html+=`</tbody></table></div>`;
+  if(paceTable.length>5)html+=`<div style="font-size:11px;color:var(--text3);margin-top:4px">… 他 ${paceTable.length-5} 地点</div>`;
+  document.getElementById('pace-table-preview').innerHTML=html;
+  render();
 }
 
-function setStart() {
-  const v = document.getElementById('start-time').value;
-  const s = timeToSec(v);
-  if (!s && s !== 0) { setMsg('スタート時刻を入力してください'); return; }
-  startSec = s;
-  document.getElementById('start-display').textContent = `スタート: ${v}`;
-  setMsg(''); render();
+// ===== SETTINGS =====
+function setGoalPreset(km,name,btn){TOTAL=km;goalName=name;document.getElementById('goal-km').value=km;document.getElementById('goal-display').textContent=`${name} (${km}km)`;document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');render();}
+function onGoalChange(){const v=parseFloat(document.getElementById('goal-km').value);if(isNaN(v)||v<=0)return;TOTAL=v;const pr={42.195:'フルマラソン',21.0975:'ハーフマラソン',80:'80km',10:'10km',5:'5km'};goalName=pr[v]||`${v}km`;document.getElementById('goal-display').textContent=`${goalName} (${v}km)`;document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('selected'));render();}
+
+function setStart(){const v=document.getElementById('start-time').value;const s=timeToSec(v);if(!s&&s!==0){setMsg('スタート時刻を入力してください');return;}startSec=s;document.getElementById('start-display').textContent=`スタート: ${v}`;setMsg('');render();}
+function setMsg(m){document.getElementById('msg').textContent=m;}
+
+// ===== RECORDING =====
+function quickSplit(){
+  if(startSec===null){setMsg('先にスタート時刻をセット');return;}
+  const km=parseFloat(document.getElementById('quick-km').value);
+  if(isNaN(km)||km<=0){setMsg('キロ地点を入力してください');return;}
+  if(entries.some(e=>e.type==='split'&&Math.abs(e.km-km)<0.05)){setMsg(`${km}km付近はすでに記録済みです`);return;}
+  const cs=nowSec(),el=elapsedFrom(cs);
+  if(el<0){setMsg('スタート前の時刻です');return;}
+  entries.push({type:'split',km,clockSec:cs,elapsed:el,note:''});
+  entries.sort((a,b)=>a.elapsed-b.elapsed);
+  setMsg('');render();
 }
-
-function setMsg(m) { document.getElementById('msg').textContent = m; }
-
-function quickSplit() {
-  if (startSec === null) { setMsg('先にスタート時刻をセット'); return; }
-  const km = parseFloat(document.getElementById('quick-km').value);
-  if (isNaN(km) || km <= 0) { setMsg('キロ地点を入力してください'); return; }
-  if (entries.some(e => e.type==='split' && Math.abs(e.km-km) < 0.05)) { setMsg(`${km}km付近はすでに記録済みです`); return; }
-  const cs = nowSec(), el = elapsed(cs);
-  if (el < 0) { setMsg('スタート前の時刻です'); return; }
-  entries.push({ type: 'split', km, clockSec: cs, elapsed: el, note: '' });
-  entries.sort((a, b) => a.elapsed - b.elapsed);
-  setMsg(''); render();
-}
-
-function quickRestStart() {
-  if (startSec === null) { setMsg('先にスタート時刻をセット'); return; }
-  if (isResting()) { setMsg('すでに休憩中です'); return; }
-  const cs = nowSec(), el = elapsed(cs);
-  entries.push({ type: 'rest', clockSec: cs, elapsed: el, note: '' });
+function quickRestStart(){
+  if(startSec===null){setMsg('先にスタート時刻をセット');return;}
+  if(isResting()){setMsg('すでに休憩中です');return;}
+  const cs=nowSec(),el=elapsedFrom(cs);
+  entries.push({type:'rest',clockSec:cs,elapsed:el,note:''});
   setMsg('');
-  document.getElementById('btn-rest-start').disabled = true;
-  document.getElementById('btn-rest-end').disabled = false;
-  startRestTimer(); render();
+  document.getElementById('btn-rest-start').disabled=true;
+  document.getElementById('btn-rest-end').disabled=false;
+  startRestTimer();render();
 }
-
-function quickRestEnd() {
-  const lr = entries.find(e => e.type==='rest' && !e.restDuration);
-  if (!lr) { setMsg('休憩開始が記録されていません'); return; }
-  const cs = nowSec(), el = elapsed(cs);
-  if (el <= lr.elapsed) { setMsg('時刻が開始より前です'); return; }
-  lr.restDuration = el - lr.elapsed; lr.restEndClock = cs;
-  document.getElementById('btn-rest-start').disabled = false;
-  document.getElementById('btn-rest-end').disabled = true;
-  stopRestTimer(); setMsg(''); render();
+function quickRestEnd(){
+  const lr=entries.find(e=>e.type==='rest'&&!e.restDuration);
+  if(!lr){setMsg('休憩開始が記録されていません');return;}
+  const cs=nowSec(),el=elapsedFrom(cs);
+  if(el<=lr.elapsed){setMsg('時刻が開始より前です');return;}
+  lr.restDuration=el-lr.elapsed;lr.restEndClock=cs;
+  document.getElementById('btn-rest-start').disabled=false;
+  document.getElementById('btn-rest-end').disabled=true;
+  stopRestTimer();setMsg('');render();
 }
-
-function startRestTimer() {
+function startRestTimer(){
   stopRestTimer();
-  const re = entries.find(e => e.type==='rest' && !e.restDuration);
-  if (!re) return;
-  document.getElementById('rest-indicator').style.display = 'flex';
-  restTimerInterval = setInterval(() => {
-    const dur = elapsed(nowSec()) - re.elapsed;
-    document.getElementById('rest-timer-display').textContent = fmtElapsed(Math.max(0, dur));
-  }, 1000);
+  const re=entries.find(e=>e.type==='rest'&&!e.restDuration);if(!re)return;
+  document.getElementById('rest-ind').style.display='flex';
+  restTimerInterval=setInterval(()=>{const dur=elapsedFrom(nowSec())-re.elapsed;document.getElementById('rest-timer').textContent=fmtElapsed(Math.max(0,dur));},1000);
 }
-
-function stopRestTimer() {
-  if (restTimerInterval) { clearInterval(restTimerInterval); restTimerInterval = null; }
-  document.getElementById('rest-indicator').style.display = 'none';
-}
-
-function onTypeChange() {
-  document.getElementById('f-km').style.display = document.getElementById('entry-type').value === 'rest_end' ? 'none' : '';
-}
-
-function addEntry() {
-  if (startSec === null) { setMsg('先にスタート時刻をセット'); return; }
-  const type = document.getElementById('entry-type').value;
-  const cs = timeToSec(document.getElementById('entry-clock').value);
-  const note = document.getElementById('entry-note').value;
-  if (!cs && cs !== 0) { setMsg('時刻を入力してください'); return; }
-  const el = elapsed(cs);
-  if (el < 0) { setMsg('スタート前の時刻です'); return; }
-  if (type !== 'rest_end') {
-    const km = parseFloat(document.getElementById('entry-km').value);
-    if (isNaN(km) || km <= 0) { setMsg('キロ地点を正しく入力してください'); return; }
-    if (type==='split' && entries.some(e=>e.type==='split'&&Math.abs(e.km-km)<0.05)) { setMsg(`${km}km付近はすでに記録済みです`); return; }
-    entries.push({ type, km, clockSec: cs, elapsed: el, note });
+function stopRestTimer(){if(restTimerInterval){clearInterval(restTimerInterval);restTimerInterval=null;}document.getElementById('rest-ind').style.display='none';}
+function onTypeChange(){document.getElementById('f-km').style.display=document.getElementById('entry-type').value==='rest_end'?'none':'';}
+function addEntry(){
+  if(startSec===null){setMsg('先にスタート時刻をセット');return;}
+  const type=document.getElementById('entry-type').value;
+  const cs=timeToSec(document.getElementById('entry-clock').value);
+  const note=document.getElementById('entry-note').value;
+  if(!cs&&cs!==0){setMsg('時刻を入力してください');return;}
+  const el=elapsedFrom(cs);if(el<0){setMsg('スタート前の時刻です');return;}
+  if(type!=='rest_end'){
+    const km=parseFloat(document.getElementById('entry-km').value);
+    if(isNaN(km)||km<=0){setMsg('キロ地点を正しく入力してください');return;}
+    if(type==='split'&&entries.some(e=>e.type==='split'&&Math.abs(e.km-km)<0.05)){setMsg(`${km}km付近はすでに記録済みです`);return;}
+    entries.push({type,km,clockSec:cs,elapsed:el,note});
   } else {
-    const lr = [...entries].reverse().find(e => e.type==='rest' && !e.restDuration);
-    if (!lr) { setMsg('休憩開始が未記録です'); return; }
-    if (el <= lr.elapsed) { setMsg('休憩終了は開始より後にしてください'); return; }
-    lr.restDuration = el - lr.elapsed; lr.restEndClock = cs;
-    if (!isResting()) { document.getElementById('btn-rest-start').disabled=false; document.getElementById('btn-rest-end').disabled=true; stopRestTimer(); }
+    const lr=[...entries].reverse().find(e=>e.type==='rest'&&!e.restDuration);
+    if(!lr){setMsg('休憩開始が未記録です');return;}
+    if(el<=lr.elapsed){setMsg('休憩終了は開始より後にしてください');return;}
+    lr.restDuration=el-lr.elapsed;lr.restEndClock=cs;
+    if(!isResting()){document.getElementById('btn-rest-start').disabled=false;document.getElementById('btn-rest-end').disabled=true;stopRestTimer();}
   }
-  entries.sort((a, b) => a.elapsed - b.elapsed);
-  document.getElementById('entry-clock').value = '';
-  document.getElementById('entry-km').value = '';
-  document.getElementById('entry-note').value = '';
-  setMsg(''); render();
+  entries.sort((a,b)=>a.elapsed-b.elapsed);
+  document.getElementById('entry-clock').value='';document.getElementById('entry-km').value='';document.getElementById('entry-note').value='';
+  setMsg('');render();
+}
+function deleteEntry(i){const e=entries[i];if(e.type==='rest'&&!e.restDuration){stopRestTimer();document.getElementById('btn-rest-start').disabled=false;document.getElementById('btn-rest-end').disabled=true;}entries.splice(i,1);render();}
+function addCustomTarget(){const v=parseFloat(document.getElementById('custom-km').value);if(isNaN(v)||v<=0){setMsg('正しい数値を入力してください');return;}if(customTargets.includes(v)){setMsg('すでに追加済みです');return;}customTargets.push(v);customTargets.sort((a,b)=>a-b);document.getElementById('custom-km').value='';renderCustomTags();renderPredictions();}
+function removeCustomTarget(v){customTargets=customTargets.filter(x=>x!==v);renderCustomTags();renderPredictions();}
+function renderCustomTags(){document.getElementById('custom-tags').innerHTML=customTargets.map(v=>`<span class="badge b-teal" style="cursor:pointer;padding:4px 10px;font-size:12px" onclick="removeCustomTarget(${v})">${v}km <i class="ti ti-x" style="font-size:10px"></i></span>`).join('');}
+
+// ===== PACE CALCULATIONS =====
+function getPaceMode(){return parseInt(document.getElementById('pace-mode').value);}
+function getCurrentPace(){
+  const sp=getSplits(),mv=getPaceMode();
+  if(sp.length<2)return null;
+  if(mv===0){const l=sp[sp.length-1];const tr=entries.filter(r=>r.type==='rest'&&r.restDuration&&r.elapsed<=l.elapsed).reduce((s,r)=>s+r.restDuration,0);return(l.elapsed-tr)/l.km;}
+  const recent=sp.slice(-mv);if(recent.length<2)return null;
+  const first=recent[0],last=recent[recent.length-1];
+  const rest=getRestsBetween(first,last);
+  return(last.elapsed-first.elapsed-rest)/(last.km-first.km);
+}
+function getLastLapPace(){const sp=getSplits();if(sp.length<2)return null;const l=sp[sp.length-1],p=sp[sp.length-2];const rest=getRestsBetween(p,l);return(l.elapsed-p.elapsed-rest)/(l.km-p.km);}
+function getAllAvgPace(){const sp=getSplits();if(sp.length<2)return null;const l=sp[sp.length-1];const tr=entries.filter(r=>r.type==='rest'&&r.restDuration&&r.elapsed<=l.elapsed).reduce((s,r)=>s+r.restDuration,0);return(l.elapsed-tr)/l.km;}
+function buildAutoPaces(){
+  const mv=getPaceMode(),ml=mv===0?'全平均':mv===1?'直近1km':`直近${mv}km`;
+  const paces=[];
+  const cur=getCurrentPace();if(cur)paces.push({label:`現在ペース(${ml})`,sec:cur,type:'auto'});
+  const lap=getLastLapPace();if(lap&&(!cur||Math.abs(lap-cur)>1))paces.push({label:'直前ラップ',sec:lap,type:'auto'});
+  const avg=getAllAvgPace();if(avg&&(!cur||Math.abs(avg-cur)>1)&&(!lap||Math.abs(avg-lap)>1))paces.push({label:'全区間平均',sec:avg,type:'auto'});
+  customPaces.forEach(p=>paces.push({label:`${fmtPace(p)}/km`,sec:p,type:'manual'}));
+  return paces;
+}
+function addCustomPace(){
+  const raw=document.getElementById('custom-pace-input').value;
+  const sec=parsePaceStr(raw);
+  if(!sec||sec<=0){setMsg('ペースの形式が正しくありません（例: 8\'30）');return;}
+  if(customPaces.includes(sec)){setMsg('すでに追加済みです');return;}
+  customPaces.push(sec);customPaces.sort((a,b)=>a-b);
+  document.getElementById('custom-pace-input').value='';
+  renderPaceChips();renderArrival();
+}
+function removeCustomPace(sec){customPaces=customPaces.filter(x=>x!==sec);renderPaceChips();renderArrival();}
+function renderPaceChips(){document.getElementById('pace-chips').innerHTML=customPaces.map(sec=>`<span class="pace-chip chip-manual">${fmtPace(sec)}/km <button class="rm-btn" onclick="removeCustomPace(${sec})"><i class="ti ti-x" style="font-size:11px"></i></button></span>`).join('');}
+
+// ===== RENDER =====
+function render(){renderSummary();renderTable();renderPredictions();renderArrival();if(document.getElementById('pane-chart').style.display!=='none')renderChart();}
+
+function renderSummary(){
+  const sp=getSplits(),l=sp[sp.length-1];
+  document.getElementById('s-km').textContent=l?`${l.km}km`:'—';
+  const mv=getPaceMode(),ml=mv===0?'全平均':mv===1?'直近1km':`直近${mv}km`;
+  const cur=getCurrentPace();
+  document.getElementById('s-pace').textContent=fmtPace(cur);
+  document.getElementById('s-pace-label').textContent=`/ km（${ml}）`;
+  const lap=getLastLapPace();document.getElementById('s-lap').textContent=fmtPace(lap);
+  if(cur&&l){
+    const rem=TOTAL-l.km;
+    if(rem>0){document.getElementById('s-finish').textContent=secToClockStr(l.clockSec+rem*cur);document.getElementById('s-finish-label').textContent=goalName;}
+    else{document.getElementById('s-finish').textContent='完走';document.getElementById('s-finish-label').textContent='';}
+  } else{document.getElementById('s-finish').textContent='—';document.getElementById('s-finish-label').textContent='';}
+  
+  // Savings
+  const el=document.getElementById('s-savings');
+  const el2=document.getElementById('s-savings-label');
+  if(l&&paceTable.length){
+    const diff=getSavings(l.km,l.clockSec);
+    if(diff!==null){
+      const abs=Math.abs(Math.round(diff));
+      const m=Math.floor(abs/60),s=abs%60;
+      const str=m>0?`${m}:${String(s).padStart(2,'0')}`:`${s}秒`;
+      if(diff>=0){el.textContent=`+${str}`;el.className='mval mval-savings savings-pos';el2.textContent='貯金';}
+      else{el.textContent=`-${str}`;el.className='mval mval-savings savings-neg';el2.textContent='借金';}
+    } else{el.textContent='—';el.className='mval mval-savings';el2.textContent='';}
+  } else{el.textContent='—';el.className='mval mval-savings';el2.textContent='目標表なし';}
 }
 
-function deleteEntry(i) {
-  const e = entries[i];
-  if (e.type==='rest' && !e.restDuration) { stopRestTimer(); document.getElementById('btn-rest-start').disabled=false; document.getElementById('btn-rest-end').disabled=true; }
-  entries.splice(i, 1); render();
-}
-
-function addCustomTarget() {
-  const v = parseFloat(document.getElementById('custom-km').value);
-  if (isNaN(v) || v <= 0) { setMsg('正しい数値を入力してください'); return; }
-  if (customTargets.includes(v)) { setMsg('すでに追加済みです'); return; }
-  customTargets.push(v); customTargets.sort((a,b)=>a-b);
-  document.getElementById('custom-km').value = '';
-  renderCustomTags(); renderPredictions();
-}
-
-function removeCustomTarget(v) { customTargets = customTargets.filter(x => x !== v); renderCustomTags(); renderPredictions(); }
-
-function renderCustomTags() {
-  document.getElementById('custom-tags').innerHTML = customTargets.map(v =>
-    `<span class="badge b-teal" style="cursor:pointer;padding:4px 10px;font-size:12px" onclick="removeCustomTarget(${v})">${v}km <i class="ti ti-x" style="font-size:10px"></i></span>`
-  ).join('');
-}
-
-function render() { renderSummary(); renderTable(); renderPredictions(); if (document.getElementById('pane-chart').style.display !== 'none') renderChart(); }
-
-function renderSummary() {
-  const sp = getSplits(), l = sp[sp.length-1];
-  document.getElementById('s-km').textContent = l ? `${l.km}km` : '—';
-  const modeVal = parseInt(document.getElementById('pace-mode').value);
-  const modeLabel = modeVal===0 ? '全平均' : modeVal===1 ? '直近1km' : `直近${modeVal}km`;
-  const curPace = getPaceForPrediction();
-  document.getElementById('s-pace').textContent = fmtPace(curPace);
-  document.getElementById('s-pace-label').textContent = `/ km（${modeLabel}）`;
-  if (sp.length >= 2) {
-    const last2=sp[sp.length-1], prev2=sp[sp.length-2];
-    const rest2 = getRestsBetween(prev2, last2);
-    const lap = (last2.elapsed - prev2.elapsed - rest2) / (last2.km - prev2.km);
-    document.getElementById('s-avg').textContent = fmtPace(lap);
-  } else document.getElementById('s-avg').textContent = '—';
-  if (curPace && l) {
-    const rem = TOTAL - l.km;
-    if (rem > 0) {
-      document.getElementById('s-finish').textContent = secToClockStr(l.clockSec + rem * curPace);
-      document.getElementById('s-finish-label').textContent = goalName;
-    } else {
-      document.getElementById('s-finish').textContent = '完走';
-      document.getElementById('s-finish-label').textContent = '';
-    }
-  } else { document.getElementById('s-finish').textContent = '—'; document.getElementById('s-finish-label').textContent = ''; }
-}
-
-function renderTable() {
-  const tbody = document.getElementById('records-body');
-  if (!entries.length) { tbody.innerHTML = '<tr><td colspan="7"><div class="empty"><i class="ti ti-flag"></i><br>まだ記録がありません</div></td></tr>'; return; }
-  const sp = getSplits();
-  let html = '';
-  [...entries].sort((a,b)=>a.elapsed-b.elapsed).forEach(e => {
-    const ri = entries.indexOf(e);
-    if (e.type === 'split') {
-      const prev = sp.filter(s=>s.km<e.km).pop();
-      let lap=null, pace=null;
-      if (prev) { const rest=getRestsBetween(prev,e); lap=e.elapsed-prev.elapsed-rest; pace=lap/(e.km-prev.km); }
-      const pc = pace&&pace<5*60?'b-green':pace&&pace<7*60?'b-blue':'b-amber';
-      html += `<tr><td><span class="badge b-blue">${e.km}km</span></td><td>${secToClockStr(e.clockSec)}</td><td>${fmtElapsed(e.elapsed)}</td><td>${lap?fmtElapsed(lap):'—'}</td><td>${pace?`<span class="badge ${pc}">${fmtPace(pace)}/km</span>`:'—'}</td><td style="color:var(--text2)">${e.note||''}</td><td><button class="btn btn-sm btn-danger" onclick="deleteEntry(${ri})"><i class="ti ti-trash"></i></button></td></tr>`;
-    } else if (e.type === 'rest') {
-      const dur = e.restDuration ? fmtElapsed(e.restDuration) : '計測中...';
-      html += `<tr><td>—</td><td>${secToClockStr(e.clockSec)}</td><td>${fmtElapsed(e.elapsed)}</td><td colspan="2"><span class="badge b-red"><i class="ti ti-coffee" style="font-size:11px"></i> 休憩 ${dur}${e.note?' · '+e.note:''}</span></td><td></td><td><button class="btn btn-sm btn-danger" onclick="deleteEntry(${ri})"><i class="ti ti-trash"></i></button></td></tr>`;
+function renderTable(){
+  const tbody=document.getElementById('records-body');
+  if(!entries.length){tbody.innerHTML='<tr><td colspan="10"><div class="empty"><i class="ti ti-flag"></i><br>まだ記録がありません</div></td></tr>';return;}
+  const sp=getSplits();let html='';
+  [...entries].sort((a,b)=>a.elapsed-b.elapsed).forEach(e=>{
+    const ri=entries.indexOf(e);
+    if(e.type==='split'){
+      const prev=sp.filter(s=>s.km<e.km).pop();
+      let totalLap=null,restBetween=0,runLap=null,pace=null;
+      if(prev){totalLap=e.elapsed-prev.elapsed;restBetween=getRestsBetween(prev,e);runLap=totalLap-restBetween;pace=runLap/(e.km-prev.km);}
+      const pc=pace&&pace<5*60?'b-green':pace&&pace<7*60?'b-blue':'b-amber';
+      const restCell=restBetween>0?`<span class="badge b-red">${fmtElapsed(restBetween)}</span>`:'—';
+      
+      // Savings cell
+      let diffCell='—';
+      if(paceTable.length){
+        const diff=getSavings(e.km,e.clockSec);
+        if(diff!==null){
+          const abs=Math.abs(Math.round(diff));const m=Math.floor(abs/60),s=abs%60;
+          const str=m>0?`${m}:${String(s).padStart(2,'0')}`:`${s}秒`;
+          const cls=diff>=0?'b-plus':'b-minus';
+          diffCell=`<span class="badge ${cls}">${diff>=0?'+':'−'}${str}</span>`;
+        }
+      }
+      const target=getTargetForKm(e.km);
+      const targetCell=target?secToClockStr(target.goal_sec):'—';
+      
+      html+=`<tr><td><span class="badge b-blue">${e.km}km</span></td><td>${secToClockStr(e.clockSec)}</td><td>${fmtElapsed(e.elapsed)}</td><td>${totalLap?fmtElapsed(totalLap):'—'}</td><td>${restCell}</td><td>${pace?`<span class="badge ${pc}">${fmtPace(pace)}/km</span>`:'—'}</td><td style="color:var(--text2)">${targetCell}</td><td>${diffCell}</td><td style="color:var(--text2)">${e.note||''}</td><td><button class="btn btn-sm btn-d" onclick="deleteEntry(${ri})"><i class="ti ti-trash"></i></button></td></tr>`;
+    } else if(e.type==='rest'){
+      const dur=e.restDuration?fmtElapsed(e.restDuration):'計測中...';
+      html+=`<tr><td>—</td><td>${secToClockStr(e.clockSec)}</td><td>${fmtElapsed(e.elapsed)}</td><td colspan="5"><span class="badge b-red"><i class="ti ti-coffee" style="font-size:11px"></i> 休憩 ${dur}${e.note?' · '+e.note:''}</span></td><td></td><td><button class="btn btn-sm btn-d" onclick="deleteEntry(${ri})"><i class="ti ti-trash"></i></button></td></tr>`;
     }
   });
-  tbody.innerHTML = html;
+  tbody.innerHTML=html;
 }
 
-function renderPredictions() {
-  const grid = document.getElementById('predict-grid');
-  const sp = getSplits();
-  if (!sp.length) { grid.innerHTML = '<div class="empty" style="grid-column:1/-1">記録を追加すると予測が表示されます</div>'; return; }
-  const pace = getPaceForPrediction(), l = sp[sp.length-1];
-  if (!pace) {
-    const modeVal = parseInt(document.getElementById('pace-mode').value);
-    const need = modeVal===0 ? 2 : modeVal+1;
-    grid.innerHTML = `<div class="empty" style="grid-column:1/-1">${need}地点以上の記録が必要です</div>`; return;
+function getDefaultTargets(){const t=[];if(TOTAL>=1)t.push(1);if(TOTAL>=5)t.push(5);if(TOTAL>=10)t.push(10);if(TOTAL>=15)t.push(15);if(TOTAL>=20)t.push(20);if(Math.abs(TOTAL-42.195)<.01)t.push(21.0975);if(TOTAL>=25)t.push(25);if(TOTAL>=30)t.push(30);if(TOTAL>=35)t.push(35);if(TOTAL>=40)t.push(40);if(TOTAL>=50)t.push(50);if(TOTAL>=60)t.push(60);if(TOTAL>=70)t.push(70);t.push(TOTAL);return[...new Set(t)].sort((a,b)=>a-b);}
+
+function renderPredictions(){
+  const grid=document.getElementById('predict-grid');
+  const sp=getSplits();
+  if(!sp.length){grid.innerHTML='<div class="empty" style="grid-column:1/-1">記録を追加すると予測が表示されます</div>';return;}
+  const pace=getCurrentPace(),l=sp[sp.length-1];
+  if(!pace){const mv=getPaceMode();grid.innerHTML=`<div class="empty" style="grid-column:1/-1">${mv===0?2:mv+1}地点以上の記録が必要です</div>`;return;}
+  const allTargets=[...new Set([...getDefaultTargets(),...customTargets])].sort((a,b)=>a-b);
+  let html='';
+  allTargets.forEach(km=>{
+    if(km<=l.km)return;
+    const remKm=km-l.km,predEl=l.elapsed+remKm*pace,predClock=l.clockSec+remKm*pace;
+    const isNext=km===allTargets.find(t=>t>l.km);
+    const isGoal=Math.abs(km-TOTAL)<.001,isCustom=customTargets.includes(km);
+    const label=Math.abs(km-21.0975)<.001&&Math.abs(TOTAL-42.195)<.01?'ハーフ':isGoal?`ゴール`:`${km}km`;
+    const bdg=isGoal?'b-green':isCustom?'b-teal':'b-gray';
+    
+    // savings at predicted time
+    let diffHtml='';
+    if(paceTable.length){
+      const target=getTargetForKm(km);
+      if(target){
+        let pcs=predClock;while(pcs+86400<target.goal_sec-3600)pcs+=86400;
+        const diff=target.goal_sec-pcs;
+        const abs=Math.abs(Math.round(diff));const m=Math.floor(abs/60),s=abs%60;
+        const str=m>0?`${m}:${String(s).padStart(2,'0')}`:`${s}秒`;
+        const col=diff>=0?'#27500A':'#791F1F';
+        diffHtml=`<div class="pcard-diff" style="color:${col}">${diff>=0?'+':'−'}${str}</div>`;
+      }
+    }
+    html+=`<div class="pcard${isNext?' pcard-hl':''}"><div class="pcard-km"><span class="badge ${bdg}">${label}</span></div><div class="pcard-time">${secToClockStr(predClock)}</div><div class="pcard-eta">あと ${fmtElapsed(predEl-l.elapsed)}</div>${diffHtml}</div>`;
+  });
+  if(!html)html='<div class="empty" style="grid-column:1/-1">ゴール通過済みです！</div>';
+  grid.innerHTML=html;
+}
+
+function renderArrival(){
+  const sp=getSplits(),l=sp[sp.length-1];
+  const paces=buildAutoPaces();
+  const noData='<div class="empty">記録を2地点以上追加すると予測が表示されます</div>';
+  const distEl=document.getElementById('arr-dist-result');
+  const timeEl=document.getElementById('arr-time-result');
+  if(!l||paces.length===0){distEl.innerHTML=noData;timeEl.innerHTML=noData;return;}
+  
+  const distVal=parseFloat(document.getElementById('arr-dist').value);
+  if(!isNaN(distVal)&&distVal>0){
+    let rows='';
+    paces.forEach(p=>{
+      const predClock=l.clockSec+distVal*p.sec;
+      const chip=p.type==='auto'?'chip-auto':'chip-manual';
+      rows+=`<tr><td><span class="pace-chip ${chip}">${p.label}</span></td><td style="font-weight:500">${secToClockStr(predClock)}</td><td style="color:var(--text2)">あと ${fmtElapsed(distVal*p.sec)}</td></tr>`;
+    });
+    distEl.innerHTML=`<div style="overflow-x:auto"><table class="compare-tbl"><thead><tr><th>ペース</th><th>${distVal}km先の到着時刻</th><th>所要時間</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  } else distEl.innerHTML='<div class="empty">距離を入力してください</div>';
+
+  const timeSec=timeToSec(document.getElementById('arr-time').value);
+  if(timeSec!==null){
+    const diffFromLast=timeSec-l.clockSec;
+    let rows='';
+    paces.forEach(p=>{
+      if(p.sec<=0)return;
+      const kmFromLast=diffFromLast/p.sec;
+      const predKm=l.km+kmFromLast;
+      const chip=p.type==='auto'?'chip-auto':'chip-manual';
+      rows+=`<tr><td><span class="pace-chip ${chip}">${p.label}</span></td><td style="font-weight:500">${predKm>0?predKm.toFixed(2)+'km':'—'}</td><td style="color:var(--text2)">${kmFromLast>0?`+${kmFromLast.toFixed(2)}km`:'過去の時刻'}</td></tr>`;
+    });
+    timeEl.innerHTML=`<div style="overflow-x:auto"><table class="compare-tbl"><thead><tr><th>ペース</th><th>地点</th><th>現在地からの距離</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  } else timeEl.innerHTML='<div class="empty">時刻を入力してください</div>';
+}
+
+function renderChart(){
+  const sp=getSplits();if(sp.length<2){if(chartInst){chartInst.destroy();chartInst=null;}return;}
+  const labels=[],data=[],targetData=[];
+  const MAX_PACE_MIN=30; // 30分/km超は異常値として除外
+  sp.forEach((s,i)=>{
+    if(!i)return;
+    const prev=sp[i-1];
+    const rest=getRestsBetween(prev,s);
+    const runLap=s.elapsed-prev.elapsed-rest;
+    const paceMin=runLap/(s.km-prev.km)/60;
+    // 異常値（負またはMAX超）はnullにしてグラフから除外
+    const validPace=(paceMin>0&&paceMin<=MAX_PACE_MIN)?Math.round(paceMin*100)/100:null;
+    labels.push(`${s.km}km`);
+    data.push(validPace);
+    const t=getTargetForKm(s.km);
+    targetData.push(t&&t.pace_sec?Math.round(t.pace_sec/60*100)/100:null);
+  });
+
+  // 有効値からY軸範囲を計算（±20%の余白を追加）
+  const allValid=[...data,...targetData].filter(v=>v!==null);
+  let yMin=null,yMax=null;
+  if(allValid.length){
+    const mn=Math.min(...allValid),mx=Math.max(...allValid);
+    const margin=Math.max((mx-mn)*0.25,0.3); // 最低0.3分の余白
+    yMin=Math.max(0,mn-margin);
+    yMax=mx+margin;
   }
-  const allTargets = [...new Set([...getDefaultTargets(), ...customTargets])].sort((a,b)=>a-b);
-  let html = '';
-  allTargets.forEach(km => {
-    if (km <= l.km) return;
-    const remKm = km - l.km;
-    const predEl = l.elapsed + remKm * pace;
-    const predClock = l.clockSec + remKm * pace;
-    const isNext = km === allTargets.find(t => t > l.km);
-    const isGoal = Math.abs(km - TOTAL) < 0.001;
-    const isCustom = customTargets.includes(km);
-    const label = Math.abs(km-21.0975)<0.001&&Math.abs(TOTAL-42.195)<0.01 ? 'ハーフ' : isGoal ? `ゴール (${TOTAL}km)` : `${km}km`;
-    const bdg = isGoal ? 'b-green' : isCustom ? 'b-teal' : 'b-gray';
-    html += `<div class="pcard${isNext?' pcard-hl':''}"><div class="pcard-km"><span class="badge ${bdg}">${label}</span></div><div class="pcard-time">${secToClockStr(predClock)}</div><div class="pcard-eta">あと ${fmtElapsed(predEl-l.elapsed)}</div></div>`;
-  });
-  if (!html) html = '<div class="empty" style="grid-column:1/-1">ゴール通過済みです！</div>';
-  grid.innerHTML = html;
-}
 
-function renderChart() {
-  const sp = getSplits();
-  if (sp.length < 2) { if (chartInst) { chartInst.destroy(); chartInst=null; } return; }
-  const labels=[], data=[];
-  sp.forEach((s,i) => {
-    if (!i) return;
-    const prev=sp[i-1], rest=getRestsBetween(prev,s);
-    const lap=s.elapsed-prev.elapsed-rest, pace=lap/(s.km-prev.km)/60;
-    labels.push(`${s.km}km`); data.push(Math.round(pace*100)/100);
-  });
-  const dark = window.matchMedia('(prefers-color-scheme:dark)').matches;
-  const gc = dark?'rgba(255,255,255,0.08)':'rgba(0,0,0,0.07)', tc = dark?'#aaa':'#888';
-  if (chartInst) chartInst.destroy();
-  chartInst = new Chart(document.getElementById('pace-chart'), {
-    type: 'line',
-    data: { labels, datasets: [{ label: 'ペース', data, borderColor: '#378ADD', backgroundColor: 'rgba(55,138,221,0.1)', tension: .35, pointRadius: 4, fill: true }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-      scales: {
-        y: { grid: { color: gc }, ticks: { color: tc, font: { size: 11 }, callback: v => { const m=Math.floor(v),s=Math.round((v-m)*60); return `${m}'${String(s).padStart(2,'0')}`; } } },
-        x: { grid: { color: gc }, ticks: { color: tc, font: { size: 11 } } }
+  const dark=window.matchMedia('(prefers-color-scheme:dark)').matches;
+  const gc=dark?'rgba(255,255,255,.08)':'rgba(0,0,0,.07)',tc=dark?'#aaa':'#888';
+  if(chartInst)chartInst.destroy();
+
+  const datasets=[{
+    label:'走行ペース',data,
+    borderColor:'#378ADD',backgroundColor:'rgba(55,138,221,.12)',
+    tension:.3,pointRadius:4,pointHoverRadius:6,fill:true,
+    spanGaps:false // nullはギャップとして表示
+  }];
+  if(targetData.some(v=>v!==null)){
+    datasets.push({
+      label:'目標ペース',data:targetData,
+      borderColor:'#E06A3B',backgroundColor:'transparent',
+      tension:.2,pointRadius:3,borderDash:[5,4],fill:false,
+      spanGaps:true
+    });
+  }
+
+  const paceTickCallback=v=>{
+    if(v<0)return'';
+    const m=Math.floor(v),s=Math.round((v-m)*60);
+    return`${m}'${String(s).padStart(2,'0')}`;
+  };
+
+  chartInst=new Chart(document.getElementById('pace-chart'),{
+    type:'line',
+    data:{labels,datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{labels:{font:{size:11},color:tc}},
+        tooltip:{callbacks:{label:ctx=>{
+          const v=ctx.parsed.y;if(v===null)return'';
+          const m=Math.floor(v),s=Math.round((v-m)*60);
+          return`${ctx.dataset.label}: ${m}'${String(s).padStart(2,'0')}/km`;
+        }}}
+      },
+      scales:{
+        y:{
+          min:yMin!==null?yMin:undefined,
+          max:yMax!==null?yMax:undefined,
+          grid:{color:gc},
+          ticks:{color:tc,font:{size:11},callback:paceTickCallback,maxTicksLimit:8}
+        },
+        x:{grid:{color:gc},ticks:{color:tc,font:{size:11},maxRotation:45}}
       }
     }
   });
 }
 
-function showTab(name) {
-  ['records','predict','chart'].forEach(t => {
-    document.getElementById('pane-'+t).style.display = t===name ? '' : 'none';
-    document.getElementById('tab-'+t).classList.toggle('active', t===name);
-  });
-  if (name==='chart') renderChart();
+function showTab(name){
+  ['records','predict','arrival','chart'].forEach(t=>{document.getElementById('pane-'+t).style.display=t===name?'':'none';document.getElementById('tab-'+t).classList.toggle('active',t===name);});
+  if(name==='chart')renderChart();
+  if(name==='arrival'){renderArrival();renderPaceChips();}
+}
+function showSubTab(name){
+  ['arr-dist','arr-time'].forEach(t=>{document.getElementById('pane-'+t).style.display=t===name?'':'none';document.getElementById('stab-'+t).classList.toggle('active',t===name);});
 }
 
-const n = new Date();
-document.getElementById('start-time').value = `${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:00`;
+// ===== INIT =====
+const n=new Date();
+document.getElementById('start-time').value=`${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:00`;
 </script>
 </body>
 </html>
